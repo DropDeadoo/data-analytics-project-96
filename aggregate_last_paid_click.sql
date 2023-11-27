@@ -7,7 +7,7 @@ with vk_and_yandex as (
 		utm_source,
 		utm_medium,
 		utm_campaign,
-		sum(daily_spent) as total_cost
+		sum(coalesce(daily_spent, 0)) as total_cost
 	from vk_ads
 	group by 1, 2, 3, 4
 	union all
@@ -16,7 +16,7 @@ with vk_and_yandex as (
 		utm_source,
 		utm_medium,
 		utm_campaign,
-		sum(daily_spent) as total_cost
+		sum(coalesce(daily_spent, 0)) as total_cost
 	from ya_ads
 	group by 1, 2, 3, 4
 		   ),
@@ -41,11 +41,11 @@ last_paid_users as ( /* Создаём подзапрос в котором со
 		   )
 	select  /* В основном запросе находим необходимые по условию поля */
 		lpu.visit_date,
-		lpu.utm_source,
+		lower(lpu.utm_source) as utm_source,
 		lpu.utm_medium,
 		lpu.utm_campaign,
 		count(lpu.visitor_id) as visitors_count,
-		sum(cast(coalesce(vy.total_cost, 0) as numeric)) as total_cost,
+		coalesce(vy.total_cost, 0) as total_cost,
 		count(lpu.lead_id) as leads_count,
 		count(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then '1' end) as purchase_count,
 		sum(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then lpu.amount end) as revenue
@@ -60,7 +60,8 @@ last_paid_users as ( /* Создаём подзапрос в котором со
 			lpu.visit_date,
 			lpu.utm_source,
 			lpu.utm_medium,
-			lpu.utm_campaign
+			lpu.utm_campaign,
+			vy.total_cost
 		order by 9 desc nulls last,
            lpu.visit_date,
            5 desc,
