@@ -42,7 +42,7 @@ last_paid_users as ( /* Создаём подзапрос в котором со
 	select  /* В основном запросе находим необходимые по условию поля */
 		lpu.visit_date,
 		count(lpu.visitor_id) as visitors_count,
-		lower(lpu.utm_source) as utm_source,
+		lpu.utm_source as utm_source,
 		lpu.utm_medium,
 		lpu.utm_campaign,
 		vy.total_cost as total_cost,
