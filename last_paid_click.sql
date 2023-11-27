@@ -15,7 +15,7 @@ with union_sessions as (
         l.status_id,
         row_number()
             over (partition by s.visitor_id order by visit_date desc)
-        as rw
+        as rn
         /* Нумеруем id пользователей, с сортировкой по совершившим последнюю покупку*/
     from sessions as s
     left join leads as l
@@ -40,7 +40,7 @@ select
     status_id
 from union_sessions
 where
-    rw = '1'
+    rn = '1'
 order by
     amount desc nulls last,
     visit_date asc,
