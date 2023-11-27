@@ -41,13 +41,13 @@ last_paid_users as ( /* Создаём подзапрос в котором со
 		   )
 	select  /* В основном запросе находим необходимые по условию поля */
 		lpu.visit_date,
+		count(lpu.visitor_id) as visitors_count,
 		lower(lpu.utm_source) as utm_source,
 		lpu.utm_medium,
 		lpu.utm_campaign,
-		count(lpu.visitor_id) as visitors_count,
-		coalesce(vy.total_cost, 0) as total_cost,
+		vy.total_cost as total_cost,
 		count(lpu.lead_id) as leads_count,
-		count(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then '1' end) as purchase_count,
+		count(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then '1' end) as purchases_count,
 		sum(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then lpu.amount end) as revenue
 		from last_paid_users lpu
 		left join vk_and_yandex vy /* Соединяем с view созданной выше по utm-меткам и дате проведения кампании */ 
@@ -64,6 +64,6 @@ last_paid_users as ( /* Создаём подзапрос в котором со
 			vy.total_cost
 		order by 9 desc nulls last,
            lpu.visit_date,
-           5 desc,
+           6 desc,
            lpu.utm_source, lpu.utm_medium, lpu.utm_campaign
         limit 15;
