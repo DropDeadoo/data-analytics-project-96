@@ -50,7 +50,7 @@ last_paid_users as ( /* Создаём подзапрос в котором со
 		count(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then '1' end) as purchases_count,
 		sum(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then lpu.amount end) as revenue
 		from last_paid_users lpu
-		left join vk_and_yandex vy /* Соединяем с view созданной выше по utm-меткам и дате проведения кампании */ 
+		left join vk_and_yandex vy /* Соединяем с таблицей созданной выше по utm-меткам и дате проведения кампании */ 
 		on lpu.utm_source = vy.utm_source
 		and lpu.utm_medium = vy.utm_medium
 		and lpu.utm_campaign = vy.utm_campaign
