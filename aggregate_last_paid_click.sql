@@ -45,7 +45,7 @@ last_paid_users as ( /* Создаём подзапрос в котором со
 		lpu.utm_medium,
 		lpu.utm_campaign,
 		count(lpu.visitor_id) as visitors_count,
-		sum(vy.total_cost) as total_cost,
+		sum(cast(coalesce(vy.total_cost, 0) as numeric)) as total_cost,
 		count(lpu.lead_id) as leads_count,
 		count(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then '1' end) as purchase_count,
 		sum(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then lpu.amount end) as revenue
