@@ -13,10 +13,9 @@ with union_sessions as (
         l.amount,
         l.closing_reason,
         l.status_id,
-        row_number() over 
-        (partition by s.visitor_id order by s.visit_date desc)
+        row_number() over (partition by s.visitor_id order by s.visit_date desc)
         as rn
-/* Нумеруем id пользователей, с сортировкой по совершившим последнюю покупку*/
+    /* Нумеруем id пользователей, с сортировкой по совершившим последнюю покупку*/
     from sessions as s
     left join leads as l
         on
@@ -26,8 +25,9 @@ with union_sessions as (
         s.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 )
 
-/*Пишем основной запрос в котором бёрем все поля их подзапроса union_sessions */
-/* за исключением rw и фильтруем записи только с последними покупками пользователей */
+/*Пишем основной запрос в котором бёрем все поля из подзапроса union_sessions */
+/* за исключением rw, */
+/* и фильтруем записи только с последними покупками пользователей */
 select
     visitor_id,
     visit_date,
