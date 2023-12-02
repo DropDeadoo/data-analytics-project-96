@@ -1,6 +1,6 @@
 /* Витрина для модели атрибуции Last Paid Click_агрегированная */
-
-/* Создаём подзапрос в котором соединяем таблицы рекламных кампаний в вк и яндексе */
+/* Создаём подзапрос в котором соединяем таблицы 
+ * рекламных кампаний в вк и яндексе */
 with vk_and_yandex as (
     select
         to_char(campaign_date, 'YYYY-MM-DD') as campaign_date,
@@ -35,19 +35,18 @@ last_paid_users as (
         l.amount,
         to_char(s.visit_date, 'YYYY-MM-DD') as visit_date,
         row_number()
-            over (partition by s.visitor_id order by s.visit_date desc)
+        	over (partition by s.visitor_id order by s.visit_date desc)
         as rn
     from sessions as s
     left join leads as l
         on
             s.visitor_id = l.visitor_id
             and s.visit_date <= l.created_at
-    where
-        medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
-/* Находим пользователей только с платными кликами */
+    where /* Находим пользователей только с платными кликами */
+        s.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 )
-
-select  /* В основном запросе находим необходимые по условию поля */
+/* В основном запросе находим необходимые по условию поля */
+select  
     lpu.visit_date,
     count(lpu.visitor_id) as visitors_count,
     lower(lpu.utm_source) as utm_source,
@@ -74,12 +73,11 @@ select  /* В основном запросе находим необходим�
 from last_paid_users as lpu
 left join
     vk_and_yandex as vy /* Соединяем с view созданной выше по utm-меткам и дате проведения кампании */
-    on
-        lpu.utm_source = vy.utm_source
-        and lpu.utm_medium = vy.utm_medium
-        and lpu.utm_campaign = vy.utm_campaign
-        and lpu.visit_date = vy.campaign_date
-where rn = '1' /* Оставляем только пользователей с последним платным кликом */
+    on lpu.utm_source = vy.utm_source
+	and lpu.utm_medium = vy.utm_medium
+	and lpu.utm_campaign = vy.utm_campaign
+	and lpu.visit_date = vy.campaign_date
+where lpu.rn = '1' /* Оставляем только пользователей с последним платным кликом */
 group by
     lpu.visit_date,
     lpu.utm_source,
@@ -88,7 +86,7 @@ group by
     vy.total_cost
 order by
     9 desc nulls last,
-    lpu.visit_date,
+    lpu.visit_date asc,
     6 desc,
     lpu.utm_source, lpu.utm_medium asc, lpu.utm_campaign asc
 limit 15;
