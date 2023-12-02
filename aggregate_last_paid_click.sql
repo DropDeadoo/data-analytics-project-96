@@ -1,6 +1,6 @@
 /* Витрина для модели атрибуции Last Paid Click_агрегированная */
-/* Создаём подзапрос в котором соединяем таблицы 
- * рекламных кампаний в вк и яндексе */
+/* Создаём подзапрос в котором соединяем таблицы */
+/* рекламных кампаний в вк и яндексе */
 with vk_and_yandex as (
     select
         to_char(campaign_date, 'YYYY-MM-DD') as campaign_date,
@@ -34,7 +34,8 @@ last_paid_users as (
         l.closing_reason,
         l.amount,
         to_char(s.visit_date, 'YYYY-MM-DD') as visit_date,
-        row_number() over (partition by s.visitor_id order by s.visit_date desc) as rn
+        row_number() over (partition by s.visitor_id 
+        order by s.visit_date desc) as rn
     from sessions as s
     left join leads as l
         on
@@ -43,7 +44,6 @@ last_paid_users as (
     where /* Находим пользователей только с платными кликами */
         s.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 )
-/* В основном запросе находим необходимые по условию поля */
 select  
     lpu.visit_date,
     count(lpu.visitor_id) as visitors_count,
