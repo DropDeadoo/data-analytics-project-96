@@ -34,9 +34,7 @@ last_paid_users as (
         l.closing_reason,
         l.amount,
         to_char(s.visit_date, 'YYYY-MM-DD') as visit_date,
-        row_number()
-        	over (partition by s.visitor_id order by s.visit_date desc)
-        as rn
+        row_number() over (partition by s.visitor_id order by s.visit_date desc) as rn
     from sessions as s
     left join leads as l
         on
@@ -72,12 +70,14 @@ select
     ) as revenue
 from last_paid_users as lpu
 left join
-    vk_and_yandex as vy /* Соединяем с view созданной выше по utm-меткам и дате проведения кампании */
+/* Соединяем с поздапросом созданным выше по utm-меткам и дате проведения кампании */
+    vk_and_yandex as vy 
     on lpu.utm_source = vy.utm_source
 	and lpu.utm_medium = vy.utm_medium
 	and lpu.utm_campaign = vy.utm_campaign
 	and lpu.visit_date = vy.campaign_date
-where lpu.rn = '1' /* Оставляем только пользователей с последним платным кликом */
+/* Оставляем только пользователей с последним платным кликом */
+where lpu.rn = '1' 
 group by
     lpu.visit_date,
     lpu.utm_source,
@@ -85,8 +85,6 @@ group by
     lpu.utm_campaign,
     vy.total_cost
 order by
-    9 desc nulls last,
-    lpu.visit_date asc,
-    6 desc,
-    lpu.utm_source, lpu.utm_medium asc, lpu.utm_campaign asc
+	1 asc, 3 asc, 4 asc, 5 asc,
+	6 desc, 9 desc nulls last
 limit 15;
