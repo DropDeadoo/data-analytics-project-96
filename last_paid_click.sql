@@ -15,7 +15,7 @@ with union_sessions as (
         l.status_id,
         row_number() over (partition by s.visitor_id order by s.visit_date desc)
         as rn
-    /* Нумеруем id пользователей, с сортировкой по совершившим последнюю покупку*/
+    /* Нумеруем users id, с сортировкой по совершившим последнюю покупку*/
     from sessions as s
     left join leads as l
         on
