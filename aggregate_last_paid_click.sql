@@ -43,47 +43,57 @@ last_paid_users AS (
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 ),
 
-main AS (
     SELECT
-        lpu.visit_date,
-        COUNT(lpu.visitor_id) AS visitors_count,
-        LOWER(lpu.utm_source) AS utm_source,
-        lpu.utm_medium,
-        lpu.utm_campaign,
-        vy.total_cost AS total_cost,
-        COUNT(lpu.lead_id) AS leads_count,
-        COUNT(
-            CASE
-                WHEN lpu.status_id = '142' OR lpu.closing_reason = 'Успешно реализовано' THEN '1'
-            END
-        ) AS purchases_count,
-        SUM(
-            CASE
-                WHEN lpu.status_id = '142' OR lpu.closing_reason = 'Успешно реализовано' THEN lpu.amount
-            END
-        ) AS revenue
-    FROM last_paid_users AS lpu
-    LEFT JOIN vk_and_yandex AS vy ON lpu.utm_source = vy.utm_source
+    lpu.visit_date,
+    COUNT(lpu.visitor_id) AS visitors_count,
+    LOWER(lpu.utm_source) AS utm_source,
+    lpu.utm_medium,
+    lpu.utm_campaign,
+    vy.total_cost AS total_cost,
+    COUNT(lpu.lead_id) AS leads_count,
+    COUNT(
+        CASE
+            WHEN
+                lpu.status_id = '142'
+                OR lpu.closing_reason = 'Успешно реализовано'
+                THEN '1'
+        END
+    ) AS purchases_count,
+    SUM(
+        CASE
+            WHEN
+                lpu.status_id = '142'
+                OR lpu.closing_reason = 'Успешно реализовано'
+                THEN lpu.amount
+        END
+    ) AS revenue
+FROM last_paid_users AS lpu
+LEFT JOIN vk_and_yandex AS vy
+    ON
+        lpu.utm_source = vy.utm_source
         AND lpu.utm_medium = vy.utm_medium
         AND lpu.utm_campaign = vy.utm_campaign
         AND lpu.visit_date = vy.campaign_date
-    -- Оставляем только пользователей с последним платным кликом
-    WHERE lpu.rn = '1'
-    GROUP BY
-        lpu.visit_date,
-        lpu.utm_source,
-        lpu.utm_medium,
-        lpu.utm_campaign,
-        vy.total_cost
-    ORDER BY
-        lpu.visit_date ASC,
-        LOWER(lpu.utm_source) ASC,
-        lpu.utm_medium ASC,
-        lpu.utm_campaign ASC,
-        COUNT(
-            CASE
-                WHEN lpu.status_id = '142' OR lpu.closing_reason = 'Успешно реализовано' THEN '1'
-            END
-        ) DESC,
-        9 DESC NULLS LAST
-    LIMIT 15;
+-- Оставляем только пользователей с последним платным кликом
+WHERE lpu.rn = '1'
+GROUP BY
+    lpu.visit_date,
+    lpu.utm_source,
+    lpu.utm_medium,
+    lpu.utm_campaign,
+    vy.total_cost
+ORDER BY
+    lpu.visit_date ASC,
+    LOWER(lpu.utm_source) ASC,
+    lpu.utm_medium ASC,
+    lpu.utm_campaign ASC,
+    COUNT(
+        CASE
+            WHEN
+                lpu.status_id = '142'
+                OR lpu.closing_reason = 'Успешно реализовано'
+                THEN '1'
+        END
+    ) DESC,
+    9 DESC NULLS LAST
+LIMIT 15;
