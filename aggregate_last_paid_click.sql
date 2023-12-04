@@ -93,25 +93,25 @@ select
 from
     last_paid_users as lpu
 left join vk_and_yandex as vy
-/* Соединяем с созданным выше запросом по utm-меткам и дате проведения кампании */
-	on
-	lpu.utm_source = vy.utm_source
-	and lpu.utm_medium = vy.utm_medium
-	and lpu.utm_campaign = vy.utm_campaign
-	and lpu.visit_date = vy.campaign_date
-    where
-	rn = '1'
+    /* Соединяем по utm-меткам и дате проведения кампании */
+    on
+        lpu.utm_source = vy.utm_source
+        and lpu.utm_medium = vy.utm_medium
+        and lpu.utm_campaign = vy.utm_campaign
+        and lpu.visit_date = vy.campaign_date
+where
+    lpu.rn = '1'
 /* Оставляем только пользователей с последним платным кликом */
 group by
-    lpu.visit_date,
-    lpu.utm_source,
-    lpu.utm_medium,
-    lpu.utm_campaign
+    1,
+    2,
+    3,
+    4
 order by
-    revenue desc nulls last,
-    lpu.visit_date,
-    total_cost desc,
-    lpu.utm_source,
-    lpu.utm_medium,
-    lpu.utm_campaign
+    9 desc nulls last,
+    1,
+    6 desc,
+    2,
+    3,
+    4
 limit 15;
