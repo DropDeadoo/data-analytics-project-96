@@ -20,7 +20,7 @@ with vk_and_yandex as (
     union all
     select
         to_char(
-	      campaign_date, 'YYYY-MM-DD'
+            campaign_date, 'YYYY-MM-DD'
         ) 
 	as campaign_date,
 	utm_source,
