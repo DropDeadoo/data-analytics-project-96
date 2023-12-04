@@ -37,16 +37,18 @@ last_paid_users AS (
         l.amount,
         TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
         ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
-        AS rn
+            AS rn
     FROM sessions AS s
-    LEFT JOIN 
-        leads AS l ON s.visitor_id = l.visitor_id AND 
-            s.visit_date <= l.created_at
+    LEFT JOIN
+        leads AS l
+        ON
+            s.visitor_id = l.visitor_id
+            AND s.visit_date <= l.created_at
     WHERE -- Находим пользователей только с платными кликами
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 ),
 
-main as ( 
+main AS (
     SELECT
         lpu.visit_date,
         lpu.utm_medium,
@@ -62,7 +64,7 @@ main as (
                     OR lpu.closing_reason = 'Успешно реализовано'
                     THEN '1'
             END
-         ) AS purchases_count,
+        ) AS purchases_count,
         SUM(
             CASE
                 WHEN
@@ -78,17 +80,17 @@ main as (
             AND lpu.utm_medium = vy.utm_medium
             AND lpu.utm_campaign = vy.utm_campaign
             AND lpu.visit_date = vy.campaign_date
--- Оставляем только пользователей с последним платным кликом
-     WHERE lpu.rn = '1'
-     group by 
-         lpu.visit_date,
-         lpu.utm_medium,
-         LOWER(lpu.utm_source), 
-         lpu.utm_campaign,
-         vy.total_cost
+    -- Оставляем только пользователей с последним платным кликом
+    WHERE lpu.rn = '1'
+    GROUP BY
+        lpu.visit_date,
+        lpu.utm_medium,
+        LOWER(lpu.utm_source),
+        lpu.utm_campaign,
+        vy.total_cost
 )
-    
-select 
+
+SELECT
     visit_date,
     utm_medium,
     utm_campaign,
@@ -98,12 +100,12 @@ select
     leads_count,
     purchases_count,
     revenue
-from main
+FROM main
 ORDER BY
     visit_date ASC,
     utm_source ASC,
     utm_medium ASC,
     utm_campaign ASC,
     purchases_count DESC,
-    revenue DESC NULLS last
+    revenue DESC NULLS LAST
 LIMIT 15;
