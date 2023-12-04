@@ -21,19 +21,19 @@ with vk_and_yandex as (
     select
         to_char(
             campaign_date, 'YYYY-MM-DD'
-        ) 
-	as campaign_date,
-	utm_source,
-	utm_medium,
-	utm_campaign,
-	sum(daily_spent) as total_cost
+        )
+        as campaign_date,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        sum(daily_spent) as total_cost
     from
-	ya_ads
+        ya_ads
     group by
-	1,
-	2,
-	3,
-	4
+        1,
+        2,
+        3,
+        4
 ),
 
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
