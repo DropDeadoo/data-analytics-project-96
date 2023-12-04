@@ -40,53 +40,57 @@ with vk_and_yandex as (
 last_paid_users as (
     select
         to_char(
-	    ses.visit_date, 'YYYY-MM-DD'
-	)
-	as visit_date,
-	ses.source as utm_source,
-	ses.medium as utm_medium,
-	ses.campaign as utm_campaign,
-	ses.visitor_id,
-	ld.lead_id,
-	ld.status_id,
-	ld.closing_reason,
-	ld.amount,
-	row_number() over (
-	    partition by ses.visitor_id
-                order by ses.visit_date desc
+            ss.visit_date, 'YYYY-MM-DD'
+        )
+        as visit_date,
+        ss.source as utm_source,
+        ss.medium as utm_medium,
+        ss.campaign as utm_campaign,
+        ss.visitor_id,
+        ld.lead_id,
+        ld.status_id,
+        ld.closing_reason,
+        ld.amount,
+        row_number() over (
+            partition by ss.visitor_id
+            order by ss.visit_date desc
         ) as rn
-/* Нумеруем пользователей совершивших последний платный клик */
+    /* Нумеруем пользователей совершивших последний платный клик */
     from
-        sessions ses
+        sessions ss
     left join leads ld
-            on
-	ses.visitor_id = ld.visitor_id
-	and ses.visit_date <= ld.created_at
+        on
+            ss.visitor_id = ld.visitor_id
+            and ss.visit_date <= ld.created_at
     where
-	ses.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social') 
- /* Находим пользователей только с платными кликами */
-	)
+        ses.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
+/* Находим пользователей только с платными кликами */
+)
 
-    select
-/* В основном запросе находим необходимые по условию поля */
-	lpu.visit_date,
-	lpu.utm_source,
-	lpu.utm_medium,
-	lpu.utm_campaign,
-	count(lpu.visitor_id) as visitors_count,
-	sum(vy.total_cost) as total_cost,
-	count(lpu.lead_id) as leads_count,
-	count(
-	case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' 
-	then '1' end
-	) as purchase_count,
-	sum(
-	case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' 
-	then lpu.amount end
+select
+    /* В основном запросе находим необходимые по условию поля */
+    lpu.visit_date,
+    lpu.utm_source,
+    lpu.utm_medium,
+    lpu.utm_campaign,
+    count(lpu.visitor_id) as visitors_count,
+    sum(vy.total_cost) as total_cost,
+    count(lpu.lead_id) as leads_count,
+    count(
+        case 
+            when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано'
+                then '1' 
+    end
+    ) as purchase_count,
+     sum(
+	case 
+            when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' 
+                then lpu.amount 
+    end
 	) as revenue
-    from
-	last_paid_users lpu
-    left join vk_and_yandex vy 
+from
+    last_paid_users lpu
+left join vk_and_yandex vy 
 /* Соединяем с созданным выше запросом по utm-меткам и дате проведения кампании */
 	on
 	lpu.utm_source = vy.utm_source
