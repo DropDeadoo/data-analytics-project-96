@@ -78,15 +78,15 @@ select
     count(lpu.lead_id) as leads_count,
     count(
         case
-            when lpu.status_id = '142' or
-                 lpu.closing_reason = 'Успешно реализовано'
+            when
+                lpu.status_id = '142'
                 then '1'
         end
     ) as purchase_count,
     sum(
         case
-            when lpu.status_id = '142' or
-                 lpu.closing_reason = 'Успешно реализовано'
+            when
+                lpu.status_id = '142'
                 then lpu.amount
         end
     ) as revenue
@@ -100,18 +100,18 @@ left join vk_and_yandex as vy
 	and lpu.utm_campaign = vy.utm_campaign
 	and lpu.visit_date = vy.campaign_date
     where
-	rn = '1' 
+	rn = '1'
 /* Оставляем только пользователей с последним платным кликом */
-    group by
-	lpu.visit_date,
-	lpu.utm_source,
-	lpu.utm_medium,
-	lpu.utm_campaign
-    order by
-	revenue desc nulls last,
-	lpu.visit_date,
-	total_cost desc,
-	lpu.utm_source,
-	lpu.utm_medium,
-	lpu.utm_campaign
-    limit 15;
+group by
+    lpu.visit_date,
+    lpu.utm_source,
+    lpu.utm_medium,
+    lpu.utm_campaign
+order by
+    revenue desc nulls last,
+    lpu.visit_date,
+    total_cost desc,
+    lpu.utm_source,
+    lpu.utm_medium,
+    lpu.utm_campaign
+limit 15;
