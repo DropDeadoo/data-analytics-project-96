@@ -39,31 +39,31 @@ with vk_and_yandex as (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
 last_paid_users as (
     select
+        s.source as utm_source,
+        s.medium as utm_medium,
+        s.campaign as utm_campaign,
+        s.visitor_id,
+        l.lead_id,
+        l.status_id,
+        l.closing_reason,
+        l.amount,
         to_char(
-            ss.visit_date, 'YYYY-MM-DD'
+            s.visit_date, 'YYYY-MM-DD'
         )
         as visit_date,
-        ss.source as utm_source,
-        ss.medium as utm_medium,
-        ss.campaign as utm_campaign,
-        ss.visitor_id,
-        ld.lead_id,
-        ld.status_id,
-        ld.closing_reason,
-        ld.amount,
         row_number() over (
-            partition by ss.visitor_id
-            order by ss.visit_date desc
+            partition by s.visitor_id
+            order by s.visit_date desc
         ) as rn
     /* Нумеруем пользователей совершивших последний платный клик */
     from
-        sessions ss
-    left join leads ld
+        sessions as s
+    left join leads as l
         on
-            ss.visitor_id = ld.visitor_id
-            and ss.visit_date <= ld.created_at
+            s.visitor_id = l.visitor_id
+            and s.visit_date <= l.created_at
     where
-        ses.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
+        s.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 /* Находим пользователей только с платными кликами */
 )
 
@@ -77,20 +77,22 @@ select
     sum(vy.total_cost) as total_cost,
     count(lpu.lead_id) as leads_count,
     count(
-        case 
-            when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано'
-                then '1' 
-    end
+        case
+            when lpu.status_id = '142' or
+                 lpu.closing_reason = 'Успешно реализовано'
+                then '1'
+        end
     ) as purchase_count,
-     sum(
-	case 
-            when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' 
-                then lpu.amount 
-    end
-	) as revenue
+    sum(
+        case
+            when lpu.status_id = '142' or
+                 lpu.closing_reason = 'Успешно реализовано'
+                then lpu.amount
+        end
+    ) as revenue
 from
-    last_paid_users lpu
-left join vk_and_yandex vy 
+    last_paid_users as lpu
+left join vk_and_yandex as vy
 /* Соединяем с созданным выше запросом по utm-меткам и дате проведения кампании */
 	on
 	lpu.utm_source = vy.utm_source
