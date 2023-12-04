@@ -39,9 +39,9 @@ last_paid_users AS (
         ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
         AS rn
     FROM sessions AS s
-    LEFT JOIN leads AS l 
-    ON s.visitor_id = l.visitor_id 
-    AND s.visit_date <= l.created_at
+    LEFT JOIN leads AS l ON 
+    s.visitor_id = l.visitor_id AND 
+    s.visit_date <= l.created_at
     WHERE -- Находим пользователей только с платными кликами
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 )
