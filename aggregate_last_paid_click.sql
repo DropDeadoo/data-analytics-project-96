@@ -2,9 +2,10 @@
 /* Запрос объединяет таблицы рекламных кампаний в ВК и Яндексе */
 with vk_and_yandex as (
     select
-        to_char(campaign_date,
-            'YYYY-MM-DD') 
-            as campaign_date,
+        to_char(
+            campaign_date, 'YYYY-MM-DD'
+	)
+        as campaign_date,
         utm_source,
         utm_medium,
         utm_campaign,
@@ -18,9 +19,10 @@ with vk_and_yandex as (
 	4
     union all
     select
-        to_char(campaign_date,
-            'YYYY-MM-DD'
-        ) as campaign_date,
+        to_char(
+	      campaign_date, 'YYYY-MM-DD'
+        ) 
+	as campaign_date,
 	utm_source,
 	utm_medium,
 	utm_campaign,
@@ -37,21 +39,24 @@ with vk_and_yandex as (
 last_paid_users as (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
     select
-        to_char(ses.visit_date,
-	    'YYYY-MM-DD') as visit_date,
+        to_char(
+	    ses.visit_date, 'YYYY-MM-DD'
+	)
+	as visit_date,
 	ses.source as utm_source,
 	ses.medium as utm_medium,
 	ses.campaign as utm_campaign,
 	ses.visitor_id,
+	ld.lead_id,
+	ld.status_id,
+	ld.closing_reason,
+	ld.amount,
 	row_number() over (
 	    partition by ses.visitor_id
                 order by
 	ses.visit_date desc        ) as rn,
 /* Нумеруем пользователей совершивших последний платный клик */
-	ld.lead_id,
-	ld.status_id,
-	ld.closing_reason,
-	ld.amount
+	
     from
         sessions ses
     left join leads ld
@@ -72,8 +77,14 @@ last_paid_users as (
 	count(lpu.visitor_id) as visitors_count,
 	sum(vy.total_cost) as total_cost,
 	count(lpu.lead_id) as leads_count,
-	count(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then '1' end) as purchase_count,
-	sum(case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' then lpu.amount end) as revenue
+	count(
+	case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' 
+	then '1' end
+	) as purchase_count,
+	sum(
+	case when lpu.status_id = '142' or lpu.closing_reason = 'Успешно реализовано' 
+	then lpu.amount end
+	) as revenue
     from
 	last_paid_users lpu
     left join vk_and_yandex vy 
