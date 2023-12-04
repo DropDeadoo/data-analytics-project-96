@@ -36,20 +36,23 @@ last_paid_users AS (
         l.closing_reason,
         l.amount,
         TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
-        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
+        AS rn
     FROM sessions AS s
-    LEFT JOIN leads AS l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
+    LEFT JOIN leads AS l 
+    ON s.visitor_id = l.visitor_id 
+    AND s.visit_date <= l.created_at
     WHERE -- Находим пользователей только с платными кликами
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
-),
+)
 
-    SELECT
+SELECT
     lpu.visit_date,
-    COUNT(lpu.visitor_id) AS visitors_count,
-    LOWER(lpu.utm_source) AS utm_source,
     lpu.utm_medium,
     lpu.utm_campaign,
     vy.total_cost AS total_cost,
+    COUNT(lpu.visitor_id) AS visitors_count,
+    LOWER(lpu.utm_source) AS utm_source,
     COUNT(lpu.lead_id) AS leads_count,
     COUNT(
         CASE
@@ -95,5 +98,12 @@ ORDER BY
                 THEN '1'
         END
     ) DESC,
-    9 DESC NULLS LAST
+    SUM(
+        CASE
+            WHEN
+                lpu.status_id = '142'
+                OR lpu.closing_reason = 'Успешно реализовано'
+                THEN lpu.amount
+        END
+    ) DESC NULLS LAST
 LIMIT 15;

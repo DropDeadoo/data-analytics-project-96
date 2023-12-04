@@ -257,9 +257,12 @@ last_paid_users AS (
         l.closing_reason,
         l.amount,
         TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
-        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) 
+        AS rn
     FROM sessions AS s
-    LEFT JOIN leads AS l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
+    LEFT JOIN leads AS l 
+    ON s.visitor_id = l.visitor_id 
+    AND s.visit_date <= l.created_at
     WHERE
         medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
     -- Находим пользователей только с платными кликами
@@ -269,9 +272,9 @@ main AS (
     SELECT
         -- В основном запросе находим необходимые по условию поля
         lpu.visit_date,
+        vy.total_cost AS total_cost,
         COALESCE(COUNT(lpu.visitor_id), 0) AS visitors_count,
         LOWER(lpu.utm_source) AS utm_source,
-        vy.total_cost AS total_cost,
         COALESCE(COUNT(lpu.lead_id), 0) AS leads_count,
         COALESCE(COUNT(
             CASE
@@ -288,7 +291,9 @@ main AS (
     FROM
         last_paid_users AS lpu
     LEFT JOIN
-        vk_and_yandex AS vy ON lpu.utm_source = vy.utm_source AND lpu.visit_date = vy.campaign_date
+        vk_and_yandex AS vy 
+        ON lpu.utm_source = vy.utm_source 
+        AND lpu.visit_date = vy.campaign_date
     WHERE
         rn = '1'
     -- Оставляем только пользователей с последним платным кликом
@@ -297,9 +302,14 @@ main AS (
         lpu.utm_source,
         vy.total_cost
     ORDER BY
-        7 DESC NULLS LAST,
+        COALESCE(SUM(
+            CASE
+                WHEN lpu.status_id = '142' OR lpu.closing_reason = 'Успешно реализовано'
+                THEN lpu.amount
+            END
+        ), 0) DESC NULLS LAST,
         lpu.visit_date,
-        4 DESC,
+        vy.total_cost DESC,
         lpu.utm_source
 )
 
@@ -348,11 +358,14 @@ last_paid_users AS (
         l.closing_reason,
         l.amount,
         TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
-        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) AS rn
+        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) 
+        AS rn
     FROM
         sessions AS s
     LEFT JOIN
-        leads AS l ON s.visitor_id = l.visitor_id AND s.visit_date <= l.created_at
+        leads AS l 
+        ON s.visitor_id = l.visitor_id 
+        AND s.visit_date <= l.created_at
     WHERE
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 ),
@@ -361,27 +374,34 @@ main AS (
     -- В основном запросе находим необходимые по условию поля
     SELECT
         lpu.visit_date,
-        COUNT(lpu.visitor_id) AS visitors_count,
-        LOWER(lpu.utm_source) AS utm_source,
         lpu.utm_medium,
         lpu.utm_campaign,
         vy.total_cost AS total_cost,
+        COUNT(lpu.visitor_id) AS visitors_count,
+        LOWER(lpu.utm_source) AS utm_source,
         COUNT(lpu.lead_id) AS leads_count,
         COUNT(
             CASE
-                WHEN lpu.status_id = '142' OR lpu.closing_reason = 'Успешно реализовано' THEN '1'
+                WHEN lpu.status_id = '142' 
+                OR lpu.closing_reason = 'Успешно реализовано' 
+                THEN '1'
             END
         ) AS purchases_count,
         SUM(
             CASE
-                WHEN lpu.status_id = '142' OR lpu.closing_reason = 'Успешно реализовано' THEN lpu.amount
+                WHEN lpu.status_id = '142' 
+                OR lpu.closing_reason = 'Успешно реализовано' 
+                THEN lpu.amount
             END
         ) AS revenue
     FROM
         last_paid_users AS lpu
     LEFT JOIN
-        vk_and_yandex AS vy ON lpu.utm_source = vy.utm_source AND lpu.utm_medium = vy.utm_medium
-            AND lpu.utm_campaign = vy.utm_campaign AND lpu.visit_date = vy.campaign_date
+        vk_and_yandex AS vy 
+        ON lpu.utm_source = vy.utm_source 
+        AND lpu.utm_medium = vy.utm_medium
+        AND lpu.utm_campaign = vy.utm_campaign 
+        AND lpu.visit_date = vy.campaign_date
     WHERE
         rn = '1'
     -- Оставляем только пользователей с последним платным кликом
@@ -392,9 +412,15 @@ main AS (
         lpu.utm_campaign,
         vy.total_cost
     ORDER BY
-        9 DESC NULLS LAST,
+        SUM(
+            CASE
+                WHEN lpu.status_id = '142' 
+                OR lpu.closing_reason = 'Успешно реализовано' 
+                THEN lpu.amount
+            END
+        ) AS revenue DESC NULLS LAST,
         lpu.visit_date,
-        6 DESC,
+        vy.total_cost DESC,
         lpu.utm_source,
         lpu.utm_medium ASC,
         lpu.utm_campaign ASC
@@ -413,3 +439,4 @@ FROM
     main
 ORDER BY
     1;
+    
