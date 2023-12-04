@@ -3,11 +3,12 @@
 with vk_and_yandex as (
     select
         to_char(campaign_date,
-            'YYYY-MM-DD') as campaign_date,
-	utm_source,
-	utm_medium,
-	utm_campaign,
-	sum(daily_spent) as total_cost
+            'YYYY-MM-DD') 
+            as campaign_date,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        sum(daily_spent) as total_cost
     from
         vk_ads
     group by
@@ -18,7 +19,8 @@ with vk_and_yandex as (
     union all
     select
         to_char(campaign_date,
-            'YYYY-MM-DD') as campaign_date,
+            'YYYY-MM-DD'
+        ) as campaign_date,
 	utm_source,
 	utm_medium,
 	utm_campaign,
