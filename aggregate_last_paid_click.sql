@@ -4,7 +4,7 @@ with vk_and_yandex as (
     select
         to_char(
             campaign_date, 'YYYY-MM-DD'
-	)
+        )
         as campaign_date,
         utm_source,
         utm_medium,
@@ -15,8 +15,8 @@ with vk_and_yandex as (
     group by
         1,
         2,
-	3,
-	4
+        3,
+        4
     union all
     select
         to_char(
@@ -36,8 +36,8 @@ with vk_and_yandex as (
 	4
 ),
 
-last_paid_users as (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
+last_paid_users as (
     select
         to_char(
 	    ses.visit_date, 'YYYY-MM-DD'
@@ -53,10 +53,9 @@ last_paid_users as (
 	ld.amount,
 	row_number() over (
 	    partition by ses.visitor_id
-                order by
-	ses.visit_date desc        ) as rn,
+                order by ses.visit_date desc
+        ) as rn
 /* Нумеруем пользователей совершивших последний платный клик */
-	
     from
         sessions ses
     left join leads ld
@@ -103,9 +102,9 @@ last_paid_users as (
 	lpu.utm_medium,
 	lpu.utm_campaign
     order by
-	9 desc nulls last,
+	revenue desc nulls last,
 	lpu.visit_date,
-	5 desc,
+	total_cost desc,
 	lpu.utm_source,
 	lpu.utm_medium,
 	lpu.utm_campaign
