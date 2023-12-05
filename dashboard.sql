@@ -182,7 +182,8 @@ SELECT
     AS lifetime,
     AVG(amount) AS avg_amount,
     AVG(
-        EXTRACT(DAY FROM lead_date - first_visit_date)) * AVG(amount)
+        EXTRACT(DAY FROM lead_date - first_visit_date)
+    ) * AVG(amount)
     AS ltv
 FROM main
 GROUP BY medium
@@ -200,8 +201,8 @@ WITH advert AS (
     FROM sessions AS s
     LEFT JOIN
         leads AS l ON
-            s.visitor_id = l.visitor_id 
-            AND s.visit_date <= l.created_at
+        s.visitor_id = l.visitor_id
+        AND s.visit_date <= l.created_at
 )
 
 SELECT
@@ -209,7 +210,7 @@ SELECT
     utm_medium,
     lead_id
 FROM advert
-ORDER BY 1;
+ORDER BY visit_date;
 
 -- Основные метрики:
 -- cpu = total_cost / visitors_count
@@ -218,21 +219,24 @@ ORDER BY 1;
 -- roi = (revenue - total_cost) / total_cost * 100%
 WITH vk_and_yandex AS (
     SELECT
-        to_char(
+        TO_CHAR(
             campaign_date, 'YYYY-MM-DD'
         )
         AS campaign_date,
         utm_source,
         utm_medium,
         utm_campaign,
-        sum(daily_spent) AS total_cost
+        SUM(daily_spent) AS total_cost
     FROM
         vk_ads
     GROUP BY
-        1,
-        2,
-        3,
-        4
+        TO_CHAR(
+            campaign_date, 'YYYY-MM-DD'
+        )
+        AS campaign_date,
+        utm_source,
+        utm_medium,
+        utm_campaign
     UNION ALL
     SELECT
         to_char(
@@ -246,10 +250,13 @@ WITH vk_and_yandex AS (
     FROM
         ya_ads
     GROUP BY
-        1,
-        2,
-        3,
-        4
+        TO_CHAR(
+            campaign_date, 'YYYY-MM-DD'
+        )
+        AS campaign_date,
+        utm_source,
+        utm_medium,
+        utm_campaign
 ),
 
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
@@ -263,12 +270,12 @@ last_paid_users AS (
         l.status_id,
         l.closing_reason,
         l.amount,
-        to_char(
+        TO_CHAR(
             s.visit_date, 'YYYY-MM-DD'
         )
         AS visit_date,
-        row_number() over (
-            partition BY s.visitor_id
+        ROW_NUMBER() OVER (
+            PARTITION BY s.visitor_id
             ORDER BY s.visit_date DESC
         ) AS rn
     /* Нумеруем пользователей совершивших последний платный клик */
