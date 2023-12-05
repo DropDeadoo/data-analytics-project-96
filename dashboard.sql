@@ -104,15 +104,15 @@ WITH main1 AS (
         LOWER(s.source) AS utm_source
     FROM sessions AS s
     LEFT JOIN
-        vk_ads AS vk 
-    ON s.source = vk.utm_source 
-    AND s.medium = vk.utm_medium 
-    AND s.campaign = vk.utm_campaign
-    LEFT JOIN 
-        ya_ads AS ya 
-    ON s.source = ya.utm_source 
-    AND s.medium = ya.utm_medium 
-    AND s.campaign = ya.utm_campaign
+        vk_ads AS vk ON
+            s.source = vk.utm_source
+            AND s.medium = vk.utm_medium
+            AND s.campaign = vk.utm_campaign
+    LEFT JOIN
+        ya_ads AS ya ON
+            s.source = ya.utm_source
+            AND s.medium = ya.utm_medium
+            AND s.campaign = ya.utm_campaign
 ),
 
 main2 AS (
@@ -120,12 +120,13 @@ main2 AS (
         m1.utm_medium,
         m1.utm_campaign,
         m1.ads_cost,
-        LOWER(m1.utm_source),
+        LOWER(m1.utm_source) AS utm_source,
         CASE WHEN l.amount = '0' THEN NULL ELSE l.amount END AS revenue
     FROM main1 AS m1
-    LEFT JOIN leads AS l ON
-    m1.visitor_id = l.visitor_id AND
-    m1.visit_date <= l.created_at
+    LEFT JOIN
+        leads AS l ON
+            m1.visitor_id = l.visitor_id
+            AND m1.visit_date <= l.created_at
 )
 
 SELECT
@@ -133,18 +134,19 @@ SELECT
     SUM(ads_cost) AS adv_costs,
     SUM(revenue) AS revenue
 FROM main2
-GROUP BY 1;
+GROUP BY
+    utm_medium;
 
 -- За сколько дней с момента перехода по рекламе закрывается 90% лидов.
 WITH registration_date AS (
     SELECT
         visitor_id,
         visit_date AS first_visit_date,
-        ROW_NUMBER() OVER (PARTITION BY visitor_id ORDER BY visit_date ASC)
-        AS rn,
         source,
         medium,
-        campaign
+        campaign,
+        ROW_NUMBER() OVER (PARTITION BY visitor_id ORDER BY visit_date ASC)
+        AS rn
     FROM sessions
 ),
 
@@ -159,11 +161,12 @@ main AS (
         rd.campaign,
         l.amount
     FROM registration_date rd
-    LEFT JOIN leads l ON
-    rd.visitor_id = l.visitor_id AND
-    rd.first_visit_date <= l.created_at
-    WHERE rn = '1' AND
-    l.closing_reason = 'Успешная продажа'
+    LEFT JOIN
+        leads l ON
+            rd.visitor_id = l.visitor_id
+            AND rd.first_visit_date <= l.created_at
+    WHERE rn = '1'
+    AND l.closing_reason = 'Успешная продажа'
 )
 
 SELECT
@@ -187,9 +190,10 @@ WITH advert AS (
         l.lead_id,
         CASE WHEN l.amount <> '0' OR NULL THEN '1' END AS amount
     FROM sessions s
-    LEFT JOIN leads l ON
-    s.visitor_id = l.visitor_id AND
-    s.visit_date <= l.created_at
+    LEFT JOIN
+        leads l ON
+            s.visitor_id = l.visitor_id 
+            AND s.visit_date <= l.created_at
 )
 
 SELECT
@@ -204,36 +208,36 @@ ORDER BY 1;
 -- cpl = total_cost / leads_count
 -- cppu = total_cost / purchases_count
 -- roi = (revenue - total_cost) / total_cost * 100%
-with vk_and_yandex as (
-    select
+WITH vk_and_yandex AS (
+    SELECT
         to_char(
             campaign_date, 'YYYY-MM-DD'
         )
-        as campaign_date,
+        AS campaign_date,
         utm_source,
         utm_medium,
         utm_campaign,
-        sum(daily_spent) as total_cost
-    from
+        sum(daily_spent) AS total_cost
+    FROM
         vk_ads
-    group by
+    GROUP BY
         1,
         2,
         3,
         4
-    union all
-    select
+    UNION ALL
+    SELECT
         to_char(
             campaign_date, 'YYYY-MM-DD'
         )
-        as campaign_date,
+        AS campaign_date,
         utm_source,
         utm_medium,
         utm_campaign,
-        sum(daily_spent) as total_cost
-    from
+        sum(daily_spent) AS total_cost
+    FROM
         ya_ads
-    group by
+    GROUP BY
         1,
         2,
         3,
@@ -241,11 +245,11 @@ with vk_and_yandex as (
 ),
 
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
-last_paid_users as (
-    select
-        s.source as utm_source,
-        s.medium as utm_medium,
-        s.campaign as utm_campaign,
+last_paid_users AS (
+    SELECT
+        s.source AS utm_source,
+        s.medium AS utm_medium,
+        s.campaign AS utm_campaign,
         s.visitor_id,
         l.lead_id,
         l.status_id,
@@ -254,66 +258,66 @@ last_paid_users as (
         to_char(
             s.visit_date, 'YYYY-MM-DD'
         )
-        as visit_date,
+        AS visit_date,
         row_number() over (
-            partition by s.visitor_id
-            order by s.visit_date desc
-        ) as rn
+            partition BY s.visitor_id
+            ORDER BY s.visit_date DESC
+        ) AS rn
     /* Нумеруем пользователей совершивших последний платный клик */
-    from
-        sessions as s
-    left join leads as l
-        on
+    FROM
+        sessions AS s
+    LEFT JOIN leads AS l
+        ON
             s.visitor_id = l.visitor_id
-            and s.visit_date <= l.created_at
-    where
-        s.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
+            AND s.visit_date <= l.created_at
+    WHERE
+        s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 /* Находим пользователей только с платными кликами */
 ),
 
 main AS (
-    select
+    SELECT
     /* В основном запросе находим необходимые по условию поля */
         lpu.visit_date,
         lpu.utm_source,
         lpu.utm_medium,
         lpu.utm_campaign,
-        count(lpu.visitor_id) as visitors_count,
-        sum(vy.total_cost) as total_cost,
-        count(lpu.lead_id) as leads_count,
-        count(
-            case
-                when
+        COUNT(lpu.visitor_id) AS visitors_count,
+        SUM(vy.total_cost) AS total_cost,
+        COUNT(lpu.lead_id) AS leads_count,
+        COUNT(
+            CASE
+                WHEN
                     lpu.status_id = '142'
-                    then '1'
-            end
-        ) as purchase_count,
+                    THEN '1'
+            END
+        ) AS purchase_count,
         sum(
-            case
-                when
+            CASE
+                WHEN
                     lpu.status_id = '142'
-                    then lpu.amount
-            end
-        ) as revenue
-    from
-        last_paid_users as lpu
-    left join vk_and_yandex as vy
+                    THEN lpu.amount
+            END
+        ) AS revenue
+    FROM
+        last_paid_users AS lpu
+    LEFT JOIN vk_and_yandex AS vy
     /* Соединяем по utm-меткам и дате проведения кампании */
-        on
+        ON
             lpu.utm_source = vy.utm_source
-            and lpu.visit_date = vy.campaign_date
-     where
+            AND lpu.visit_date = vy.campaign_date
+     WHERE
          lpu.rn = '1'
 /* Оставляем только пользователей с последним платным кликом */
-     group by
+     GROUP BY
         1,
         2,
         3,
         4
-     order by
-        9 desc nulls last,
+     ORDER BY
+        9 DESC NULL LAST,
         1,
-        6 desc,
+        6 DESC,
         2,
         3,
         4
