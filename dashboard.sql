@@ -31,16 +31,25 @@ SELECT
         CAST(
             CAST(
                 COUNT(lead_id) AS FLOAT) / NULLIF(
-         CAST(
-              COUNT(DISTINCT visitor_id) AS FLOAT), 
-    0) * 100 AS NUMERIC), 2) 
+                CAST(
+                    COUNT(DISTINCT visitor_id
+                ) AS FLOAT
+    ),
+    0
+    ) * 100 AS NUMERIC
+    ), 2
+    ) 
     AS lcr,
     ROUND(
          CAST(
               CAST(
                    COUNT(amount) AS FLOAT) / NULLIF(
           CAST(
-               COUNT(lead_id) AS FLOAT), 0) * 100 AS NUMERIC), 2) 
+               COUNT(lead_id) AS FLOAT
+    ), 0
+    ) * 100 AS NUMERIC
+    ), 2
+    ) 
     AS lc
 FROM advert
 GROUP BY
