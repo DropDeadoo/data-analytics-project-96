@@ -105,14 +105,14 @@ WITH main1 AS (
     FROM sessions AS s
     LEFT JOIN
         vk_ads AS vk ON
-            s.source = vk.utm_source
-            AND s.medium = vk.utm_medium
-            AND s.campaign = vk.utm_campaign
+        s.source = vk.utm_source
+        AND s.medium = vk.utm_medium
+        AND s.campaign = vk.utm_campaign
     LEFT JOIN
         ya_ads AS ya ON
-            s.source = ya.utm_source
-            AND s.medium = ya.utm_medium
-            AND s.campaign = ya.utm_campaign
+        s.source = ya.utm_source
+        AND s.medium = ya.utm_medium
+        AND s.campaign = ya.utm_campaign
 ),
 
 main2 AS (
@@ -125,8 +125,8 @@ main2 AS (
     FROM main1 AS m1
     LEFT JOIN
         leads AS l ON
-            m1.visitor_id = l.visitor_id
-            AND m1.visit_date <= l.created_at
+        m1.visitor_id = l.visitor_id
+        AND m1.visit_date <= l.created_at
 )
 
 SELECT
@@ -160,21 +160,27 @@ main AS (
         rd.medium,
         rd.campaign,
         l.amount
-    FROM registration_date rd
+    FROM registration_date AS rd
     LEFT JOIN
-        leads l ON
-            rd.visitor_id = l.visitor_id
-            AND rd.first_visit_date <= l.created_at
-    WHERE rn = '1'
-    AND l.closing_reason = 'Успешная продажа'
+        leads AS l ON
+        rd.visitor_id = l.visitor_id
+        AND rd.first_visit_date <= l.created_at
+    WHERE
+        rd.rn = '1'
+        AND l.closing_reason = 'Успешная продажа'
 )
 
 SELECT
     medium,
-    ROUND(CAST(AVG(EXTRACT(DAY FROM lead_date - first_visit_date)) AS NUMERIC), 0)
+    ROUND(
+        CAST(
+            AVG(
+                EXTRACT(DAY FROM lead_date - first_visit_date)) AS NUMERIC), 0)
     AS lifetime,
     AVG(amount) AS avg_amount,
-    AVG(EXTRACT(DAY FROM lead_date - first_visit_date)) * AVG(amount)
+    AVG(
+        EXTRACT(
+            DAY FROM lead_date - first_visit_date)) * AVG(amount)
     AS ltv
 FROM main
 GROUP BY medium
@@ -185,7 +191,7 @@ ORDER BY
 WITH advert AS (
     SELECT
         TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
-        TO_CHAR(l.visit_date, 'YYYY-MM-DD') AS medium AS utm_medium,
+        TO_CHAR(l.created_at, 'YYYY-MM-DD') AS created_at,
         s.visitor_id,
         l.lead_id,
         CASE WHEN l.amount <> '0' OR NULL THEN '1' END AS amount
