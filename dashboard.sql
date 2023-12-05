@@ -540,10 +540,11 @@ main AS (
             END
         ) AS revenue
     FROM
-        last_paid_users AS lpu
+        last_paid_users AS
+            lpu
     LEFT JOIN
-        vk_and_yandex AS vy
-        ON lpu.utm_source = vy.utm_source
+            vk_and_yandex AS vy
+            ON lpu.utm_source = vy.utm_source
         AND lpu.utm_medium = vy.utm_medium
         AND lpu.utm_campaign = vy.utm_campaign
         AND lpu.visit_date = vy.campaign_date
