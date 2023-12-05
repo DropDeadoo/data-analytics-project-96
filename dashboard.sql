@@ -543,26 +543,18 @@ main AS (
         rn = '1'
     -- Оставляем только пользователей с последним платным кликом
     GROUP BY
-        lpu.visit_date,
-        lpu.utm_source,
-        lpu.utm_medium,
-        lpu.utm_campaign,
-        vy.total_cost
+        1,
+        6,
+        2,
+        3,
+        4
     ORDER BY
-        SUM(
-            CASE
-                WHEN
-                    lpu.status_id = '142'
-                    OR lpu.closing_reason = 'Успешно реализовано'
-                        THEN lpu.amount
-            END
-        )
-    AS revenue DESC NULL LAST,
-        lpu.visit_date,
-        vy.total_cost DESC,
-        lpu.utm_source,
-        lpu.utm_medium ASC,
-        lpu.utm_campaign ASC
+        9 DESC NULL LAST,
+        1 ASC,
+        4 DESC,
+        6 ASC,
+        2 ASC,
+        3 ASC
 )
 
 SELECT
