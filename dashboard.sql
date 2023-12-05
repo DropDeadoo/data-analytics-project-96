@@ -437,13 +437,13 @@ main AS (
         vy.total_cost,
         lpu.utm_source
     ORDER BY
-        lpu.visit_date,
+        lpu.visit_date ASC,
         vy.total_cost DESC,
-        lpu.utm_source,
+        lpu.utm_source ASC,
         COALESCE(SUM(
             CASE
-            WHEN lpu.status_id = '142'
-                THEN lpu.amount
+                WHEN lpu.status_id = '142'
+                    THEN lpu.amount
             END
         ), 0) DESC NULLS LAST
 )
@@ -528,24 +528,24 @@ main AS (
         COUNT(lpu.lead_id) AS leads_count,
         COUNT(
             CASE
-                    WHEN
+                WHEN
                     lpu.status_id = '142'
-                        THEN '1'
+                    THEN '1'
             END
         ) AS purchases_count,
         SUM(
             CASE
-                    WHEN
+                WHEN
                     lpu.status_id = '142'
-                        THEN lpu.amount
+                    THEN lpu.amount
             END
         ) AS revenue
     FROM
         last_paid_users AS
-            lpu
-            LEFT JOIN
-            vk_and_yandex AS vy
-            ON lpu.utm_source = vy.utm_source
+        lpu
+    LEFT JOIN
+        vk_and_yandex AS vy
+        ON lpu.utm_source = vy.utm_source
         AND lpu.utm_medium = vy.utm_medium
         AND lpu.utm_campaign = vy.utm_campaign
         AND lpu.visit_date = vy.campaign_date
