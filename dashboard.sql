@@ -191,12 +191,12 @@ ORDER BY
     lifetime;
 
 WITH advert AS (
--- За сколько закрывается 90 процентов сделок по рекламным кампаниям?
+    -- За сколько закрывается 90 процентов сделок по рекламным кампаниям?
     SELECT
-        TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
-        TO_CHAR(l.created_at, 'YYYY-MM-DD') AS created_at,
         s.visitor_id,
         l.lead_id,
+        TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
+        TO_CHAR(l.created_at, 'YYYY-MM-DD') AS created_at,
         CASE WHEN l.amount != '0' OR NULL THEN '1' END AS amount
     FROM sessions AS s
     LEFT JOIN
@@ -229,11 +229,8 @@ WITH vk_and_yandex AS (
         SUM(daily_spent) AS total_cost
     FROM
         vk_ads
-    GROUP BY
-        TO_CHAR(
-            campaign_date, 'YYYY-MM-DD'
-        )
-    AS campaign_date,
+    GROUP BY 
+        TO_CHAR(campaign_date, 'YYYY-MM-DD'),
         utm_source,
         utm_medium,
         utm_campaign
@@ -249,11 +246,8 @@ WITH vk_and_yandex AS (
         SUM(daily_spent) AS total_cost
     FROM
         ya_ads
-    GROUP BY
-        TO_CHAR(
-            campaign_date, 'YYYY-MM-DD'
-        )
-    AS campaign_date,
+    GROUP BY 
+        TO_CHAR(campaign_date, 'YYYY-MM-DD'),
         utm_source,
         utm_medium,
         utm_campaign
@@ -330,7 +324,7 @@ main AS (
         3,
         4
      ORDER BY
-        9 DESC NULL LAST,
+        9 DESC NULLS LAST,
         1,
         6 DESC,
         2,
@@ -390,11 +384,11 @@ last_paid_users AS (
         l.closing_reason,
         l.amount,
         TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
-        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) 
+        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
         AS rn
     FROM sessions AS s
-    LEFT JOIN leads AS l 
-    ON s.visitor_id = l.visitor_id 
+    LEFT JOIN leads AS l
+    ON s.visitor_id = l.visitor_id
     AND s.visit_date <= l.created_at
     WHERE
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
@@ -411,14 +405,14 @@ main AS (
         COALESCE(COUNT(lpu.lead_id), 0) AS leads_count,
         COALESCE(COUNT(
             CASE
-                WHEN lpu.status_id = '142' OR 
+                WHEN lpu.status_id = '142' OR
                 lpu.closing_reason = 'Успешно реализовано'
                 THEN '1'
             END
         ), 0) AS purchases_count,
         COALESCE(SUM(
             CASE
-                WHEN lpu.status_id = '142' OR 
+                WHEN lpu.status_id = '142' OR
                 lpu.closing_reason = 'Успешно реализовано'
                 THEN lpu.amount
             END
@@ -426,8 +420,8 @@ main AS (
     FROM
         last_paid_users AS lpu
     LEFT JOIN
-        vk_and_yandex AS vy 
-        ON lpu.utm_source = vy.utm_source 
+        vk_and_yandex AS vy
+        ON lpu.utm_source = vy.utm_source
         AND lpu.visit_date = vy.campaign_date
     WHERE
         lpu.rn = '1'
@@ -439,7 +433,7 @@ main AS (
     ORDER BY
         COALESCE(SUM(
             CASE
-                WHEN lpu.status_id = '142' OR 
+                WHEN lpu.status_id = '142' OR
                 lpu.closing_reason = 'Успешно реализовано'
                 THEN lpu.amount
             END
