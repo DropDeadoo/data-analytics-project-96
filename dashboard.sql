@@ -545,10 +545,11 @@ main AS (
         lpu
     LEFT JOIN
         vk_and_yandex AS vy
-        ON lpu.utm_source = vy.utm_source
-        AND lpu.utm_medium = vy.utm_medium
-        AND lpu.utm_campaign = vy.utm_campaign
-        AND lpu.visit_date = vy.campaign_date
+        ON
+            lpu.utm_source = vy.utm_source
+            AND lpu.utm_medium = vy.utm_medium
+            AND lpu.utm_campaign = vy.utm_campaign
+            AND lpu.visit_date = vy.campaign_date
     WHERE
         lpu.rn = '1'
     -- Оставляем только пользователей с последним платным кликом
