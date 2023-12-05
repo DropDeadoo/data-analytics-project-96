@@ -190,8 +190,8 @@ GROUP BY medium
 ORDER BY
     lifetime;
 
--- За сколько закрывается 90 процентов сделок по рекламным кампаниям?
 WITH advert AS (
+-- За сколько закрывается 90 процентов сделок по рекламным кампаниям?
     SELECT
         TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
         TO_CHAR(l.created_at, 'YYYY-MM-DD') AS created_at,
@@ -233,27 +233,27 @@ WITH vk_and_yandex AS (
         TO_CHAR(
             campaign_date, 'YYYY-MM-DD'
         )
-        AS campaign_date,
+    AS campaign_date,
         utm_source,
         utm_medium,
         utm_campaign
     UNION ALL
     SELECT
-        to_char(
+        TO_CHAR(
             campaign_date, 'YYYY-MM-DD'
         )
         AS campaign_date,
         utm_source,
         utm_medium,
         utm_campaign,
-        sum(daily_spent) AS total_cost
+        SUM(daily_spent) AS total_cost
     FROM
         ya_ads
     GROUP BY
         TO_CHAR(
             campaign_date, 'YYYY-MM-DD'
         )
-        AS campaign_date,
+    AS campaign_date,
         utm_source,
         utm_medium,
         utm_campaign
@@ -292,7 +292,7 @@ last_paid_users AS (
 
 main AS (
     SELECT
-    /* В основном запросе находим необходимые по условию поля */
+        /* В основном запросе находим необходимые по условию поля */
         lpu.visit_date,
         lpu.utm_source,
         lpu.utm_medium,
@@ -307,7 +307,7 @@ main AS (
                     THEN '1'
             END
         ) AS purchase_count,
-        sum(
+        SUM(
             CASE
                 WHEN
                     lpu.status_id = '142'
@@ -317,14 +317,14 @@ main AS (
     FROM
         last_paid_users AS lpu
     LEFT JOIN vk_and_yandex AS vy
-    /* Соединяем по utm-меткам и дате проведения кампании */
+        /* Соединяем по utm-меткам и дате проведения кампании */
         ON
             lpu.utm_source = vy.utm_source
             AND lpu.visit_date = vy.campaign_date
-     WHERE
-         lpu.rn = '1'
-/* Оставляем только пользователей с последним платным кликом */
-     GROUP BY
+    WHERE
+        lpu.rn = '1'
+    /* Оставляем только пользователей с последним платным кликом */
+    GROUP BY
         1,
         2,
         3,
@@ -397,7 +397,7 @@ last_paid_users AS (
     ON s.visitor_id = l.visitor_id 
     AND s.visit_date <= l.created_at
     WHERE
-        medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
+        s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
     -- Находим пользователей только с платными кликами
 ),
 
@@ -430,7 +430,7 @@ main AS (
         ON lpu.utm_source = vy.utm_source 
         AND lpu.visit_date = vy.campaign_date
     WHERE
-        rn = '1'
+        lpu.rn = '1'
     -- Оставляем только пользователей с последним платным кликом
     GROUP BY
         lpu.visit_date,
@@ -452,10 +452,10 @@ main AS (
 select
     visit_date,
     utm_source,
-    round(total_cost / nullif(visitors_count, 0), 2) as cpu,
-    round(total_cost / nullif(leads_count, 0), 2) as cpl,
-    round(total_cost / nullif(purchases_count, 0), 2) as cppu,
-    round((revenue - total_cost) / nullif(total_cost, 0) * 100.0, 2) as roi
+    ROUND(total_cost / NULLIF(visitors_count, 0), 2) as cpu,
+    ROUND(total_cost / NULLIF(leads_count, 0), 2) as cpl,
+    ROUND(total_cost / NULLIF(purchases_count, 0), 2) as cppu,
+    ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) as roi
 from main
 order by 1;
 
@@ -549,7 +549,7 @@ main AS (
         AND lpu.utm_campaign = vy.utm_campaign 
         AND lpu.visit_date = vy.campaign_date
     WHERE
-        rn = '1'
+        lpu.rn = '1'
     -- Оставляем только пользователей с последним платным кликом
     GROUP BY
         1,
