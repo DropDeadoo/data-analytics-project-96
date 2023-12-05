@@ -517,16 +517,18 @@ main AS (
         COUNT(lpu.lead_id) AS leads_count,
         COUNT(
             CASE
-                WHEN lpu.status_id = '142' 
-                OR lpu.closing_reason = 'Успешно реализовано' 
-                THEN '1'
+                WHEN
+                    lpu.status_id = '142' 
+                    OR lpu.closing_reason = 'Успешно реализовано' 
+                        THEN '1'
             END
         ) AS purchases_count,
         SUM(
             CASE
-                WHEN lpu.status_id = '142' 
-                OR lpu.closing_reason = 'Успешно реализовано' 
-                THEN lpu.amount
+                WHEN
+                    lpu.status_id = '142' 
+                    OR lpu.closing_reason = 'Успешно реализовано' 
+                        THEN lpu.amount
             END
         ) AS revenue
     FROM
@@ -549,11 +551,13 @@ main AS (
     ORDER BY
         SUM(
             CASE
-                WHEN lpu.status_id = '142' 
-                OR lpu.closing_reason = 'Успешно реализовано' 
-                THEN lpu.amount
+                WHEN
+                    lpu.status_id = '142'
+                    OR lpu.closing_reason = 'Успешно реализовано'
+                        THEN lpu.amount
             END
-        ) AS revenue DESC NULLS LAST,
+        )
+    AS revenue DESC NULL LAST,
         lpu.visit_date,
         vy.total_cost DESC,
         lpu.utm_source,
@@ -573,5 +577,4 @@ SELECT
 FROM
     main
 ORDER BY
-    1;
-    
+    visit_date;
