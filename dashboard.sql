@@ -439,10 +439,10 @@ main AS (
     ORDER BY
         lpu.visit_date,
         vy.total_cost DESC,
-            lpu.utm_source,
-                    COALESCE(SUM(
+        lpu.utm_source,
+        COALESCE(SUM(
             CASE
-                    WHEN lpu.status_id = '142'
+            WHEN lpu.status_id = '142'
                 THEN lpu.amount
             END
         ), 0) DESC NULLS LAST
@@ -456,7 +456,7 @@ SELECT
     ROUND(total_cost / NULLIF(purchases_count, 0), 2) AS cppu,
     ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) AS roi
 FROM main
-ORDER BY 
+ORDER BY
     visit_date,
     utm_source;
 
@@ -508,9 +508,10 @@ last_paid_users AS (
     FROM
         sessions AS s
     LEFT JOIN
-            leads AS l
-                    ON s.visitor_id = l.visitor_id
-                    AND s.visit_date <= l.created_at
+        leads AS l
+        ON
+            s.visitor_id = l.visitor_id
+            AND s.visit_date <= l.created_at
     WHERE
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 ),
