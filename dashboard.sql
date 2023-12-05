@@ -1,6 +1,6 @@
--- Запрос находит кол-во пользователей и лидов, заходящих на сайт.
--- Показывает каналы, по которым они приходят в разрезе дней/недель/месяцев.
--- Дополнительно можно найти lc и lcr для каждого канала
+/* Запрос находит кол-во пользователей и лидов, заходящих на сайт. */
+/* Показывает каналы, по которым они приходят в разрезе дней/недель/месяцев. */
+/* Дополнительно можно найти lc и lcr для каждого канала */
 WITH advert AS (
     SELECT
         s.medium AS utm_medium,
@@ -12,9 +12,10 @@ WITH advert AS (
         TO_CHAR(s.visit_date, 'Month') AS month_name,
         CASE WHEN l.amount != '0' OR NULL THEN '1' END AS amount
     FROM sessions AS s
-    LEFT JOIN leads AS l ON 
-    s.visitor_id = l.visitor_id AND 
-    s.visit_date <= l.created_at
+    LEFT JOIN
+        leads AS l ON
+    s.visitor_id = l.visitor_id AND
+            s.visit_date <= l.created_at
 )
 
 SELECT
@@ -26,14 +27,20 @@ SELECT
     COUNT(DISTINCT visitor_id) AS visitors_count,
     COUNT(DISTINCT lead_id) AS leads_count,
     COUNT(amount) AS customers_count,
-    ROUND(CAST(CAST(COUNT(lead_id) AS FLOAT) / 
+    ROUND(
+        CAST(
+            CAST(
+                COUNT(lead_id) AS FLOAT) / 
     NULLIF(CAST(COUNT(DISTINCT visitor_id) AS FLOAT), 0) * 100 AS NUMERIC), 2) 
     AS lcr,
-    ROUND(CAST(CAST(COUNT(amount) AS FLOAT) / 
+    ROUND(
+         CAST(
+              CAST(
+                   COUNT(amount) AS FLOAT) / 
     NULLIF(CAST(COUNT(lead_id) AS FLOAT), 0) * 100 AS NUMERIC), 2) 
     AS lc
 FROM advert
-GROUP BY 
+GROUP BY
     visit_date,
     day_of_week,
     number_of_week,
@@ -42,14 +49,15 @@ GROUP BY
 ORDER BY 
     visit_date;
 
--- Общая конверсия и клика в лид и из лида в оплату
+/* Общая конверсия и клика в лид и из лида в оплату */
 WITH conv_rate AS (
     SELECT
         s.visitor_id,
         l.lead_id,
         CASE WHEN l.amount != '0' OR NULL THEN '1' END AS amount
     FROM sessions AS s
-    LEFT JOIN leads AS l ON 
+    LEFT JOIN
+        leads AS l ON 
     s.visitor_id = l.visitor_id AND 
     s.visit_date <= l.created_at
     WHERE s.medium != 'organic'
