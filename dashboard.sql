@@ -14,8 +14,8 @@ WITH advert AS (
     FROM sessions AS s
     LEFT JOIN
         leads AS l ON
-    s.visitor_id = l.visitor_id AND
-            s.visit_date <= l.created_at
+            s.visitor_id = l.visitor_id
+            AND s.visit_date <= l.created_at
 )
 
 SELECT
