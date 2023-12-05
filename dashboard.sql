@@ -14,8 +14,8 @@ WITH advert AS (
     FROM sessions AS s
     LEFT JOIN
         leads AS l ON
-            s.visitor_id = l.visitor_id
-            AND s.visit_date <= l.created_at
+        s.visitor_id = l.visitor_id
+        AND s.visit_date <= l.created_at
 )
 
 SELECT
@@ -30,14 +30,17 @@ SELECT
     ROUND(
         CAST(
             CAST(
-                COUNT(lead_id) AS FLOAT) / 
-    NULLIF(CAST(COUNT(DISTINCT visitor_id) AS FLOAT), 0) * 100 AS NUMERIC), 2) 
+                COUNT(lead_id) AS FLOAT) / NULLIF(
+         CAST(
+              COUNT(DISTINCT visitor_id) AS FLOAT), 
+    0) * 100 AS NUMERIC), 2) 
     AS lcr,
     ROUND(
          CAST(
               CAST(
-                   COUNT(amount) AS FLOAT) / 
-    NULLIF(CAST(COUNT(lead_id) AS FLOAT), 0) * 100 AS NUMERIC), 2) 
+                   COUNT(amount) AS FLOAT) / NULLIF(
+          CAST(
+               COUNT(lead_id) AS FLOAT), 0) * 100 AS NUMERIC), 2) 
     AS lc
 FROM advert
 GROUP BY
