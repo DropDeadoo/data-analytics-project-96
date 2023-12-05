@@ -319,17 +319,23 @@ main AS (
         lpu.rn = '1'
     /* Оставляем только пользователей с последним платным кликом */
     GROUP BY
-        1,
-        2,
-        3,
-        4
-     ORDER BY
-        9 DESC NULLS LAST,
-        1,
-        6 DESC,
-        2,
-        3,
-        4
+        lpu.visit_date,
+        lpu.utm_source,
+        lpu.utm_medium,
+        lpu.utm_campaign
+    ORDER BY
+        lpu.visit_date,
+        lpu.utm_source,
+        lpu.utm_medium,
+        lpu.utm_campaign,
+        SUM(vy.total_cost) DESC,
+        SUM(
+            CASE
+                WHEN
+                    lpu.status_id = '142'
+                    THEN lpu.amount
+            END
+        ) DESC NULLS LAST
 )
 
 SELECT
@@ -542,17 +548,23 @@ main AS (
         lpu.rn = '1'
     -- Оставляем только пользователей с последним платным кликом
     GROUP BY
-        1,
-        2,
-        3,
-        4
+        lpu.visit_date,
+        lpu.utm_source,
+        lpu.utm_medium,
+        lpu.utm_campaign
     ORDER BY
-        9 DESC NULLS LAST,
-        1,
-        4 DESC,
-        6,
-        2,
-        3
+        lpu.visit_date,
+        lpu.utm_source,
+        lpu.utm_medium,
+        lpu.utm_campaign,
+        SUM(vy.total_cost) DESC,
+        SUM(
+            CASE
+                WHEN
+                    lpu.status_id = '142'
+                    THEN lpu.amount
+            END
+        ) DESC NULLS LAST
 )
 
 SELECT
