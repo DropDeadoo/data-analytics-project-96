@@ -428,7 +428,7 @@ main AS (
         vk_and_yandex AS vy
         ON
             lpu.utm_source = vy.utm_source
-        AND lpu.visit_date = vy.campaign_date
+            AND lpu.visit_date = vy.campaign_date
     WHERE
         lpu.rn = '1'
     -- Оставляем только пользователей с последним платным кликом
@@ -437,15 +437,15 @@ main AS (
         vy.total_cost,
         lpu.utm_source
     ORDER BY
+        lpu.visit_date,
+        vy.total_cost DESC,
+        lpu.utm_source,
         COALESCE(SUM(
             CASE
                     WHEN lpu.status_id = '142'
                 THEN lpu.amount
             END
-        ), 0) DESC NULLS LAST,
-        lpu.visit_date,
-        vy.total_cost DESC,
-        lpu.utm_source
+        ), 0) DESC NULLS LAST
 )
 
 SELECT
@@ -456,7 +456,9 @@ SELECT
     ROUND(total_cost / NULLIF(purchases_count, 0), 2) AS cppu,
     ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) AS roi
 FROM main
-ORDER BY 1, 2;
+ORDER BY 
+    visit_date,
+    utm_source;
 
 WITH vk_and_yandex AS (
     -- Детализированная сводная таблица по utm_source, utm_medium, utm_campaign
@@ -506,9 +508,9 @@ last_paid_users AS (
     FROM
         sessions AS s
     LEFT JOIN
-        leads AS l
-        ON s.visitor_id = l.visitor_id
-        AND s.visit_date <= l.created_at
+            leads AS l
+                    ON s.visitor_id = l.visitor_id
+                    AND s.visit_date <= l.created_at
     WHERE
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 ),
