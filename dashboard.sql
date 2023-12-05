@@ -175,17 +175,20 @@ SELECT
     ROUND(
         CAST(
             AVG(
-                EXTRACT(DAY FROM lead_date - first_visit_date)) AS NUMERIC), 0)
+                EXTRACT(DAY FROM lead_date - first_visit_date)) AS NUMERIC
+            ), 0
+        )
     AS lifetime,
     AVG(amount) AS avg_amount,
     AVG(
         EXTRACT(
-            DAY FROM lead_date - first_visit_date)) * AVG(amount)
+            DAY FROM lead_date - first_visit_date)
+    ) * AVG(amount)
     AS ltv
 FROM main
 GROUP BY medium
 ORDER BY
-    2;
+    lifetime;
 
 -- За сколько закрывается 90 процентов сделок по рекламным кампаниям?
 WITH advert AS (
@@ -194,10 +197,10 @@ WITH advert AS (
         TO_CHAR(l.created_at, 'YYYY-MM-DD') AS created_at,
         s.visitor_id,
         l.lead_id,
-        CASE WHEN l.amount <> '0' OR NULL THEN '1' END AS amount
-    FROM sessions s
+        CASE WHEN l.amount != '0' OR NULL THEN '1' END AS amount
+    FROM sessions AS s
     LEFT JOIN
-        leads l ON
+        leads AS l ON
             s.visitor_id = l.visitor_id 
             AND s.visit_date <= l.created_at
 )
