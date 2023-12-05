@@ -32,25 +32,23 @@ SELECT
             CAST(
                 COUNT(lead_id) AS FLOAT) / NULLIF(
                 CAST(
-                    COUNT(DISTINCT visitor_id
-                ) AS FLOAT
-    ),
-    0
-    ) * 100 AS NUMERIC
-    ), 2
-    ) 
-    AS lcr,
+                    COUNT(DISTINCT visitor_id) AS FLOAT
+                ), 0
+                   ) * 100 AS NUMERIC
+                ), 2
+           )
+        AS lcr,
     ROUND(
-         CAST(
-              CAST(
-                   COUNT(amount) AS FLOAT) / NULLIF(
-          CAST(
-               COUNT(lead_id) AS FLOAT
-    ), 0
-    ) * 100 AS NUMERIC
-    ), 2
-    ) 
-    AS lc
+        CAST(
+            CAST(
+                COUNT(amount) AS FLOAT) / NULLIF(
+                CAST(
+                    COUNT(lead_id) AS FLOAT
+                ), 0
+                    ) * 100 AS NUMERIC
+                ), 2
+            )
+        AS lc
 FROM advert
 GROUP BY
     visit_date,
@@ -58,9 +56,8 @@ GROUP BY
     number_of_week,
     month_name,
     utm_medium
-ORDER BY 
+ORDER BY
     visit_date;
-
 /* Общая конверсия и клика в лид и из лида в оплату */
 WITH conv_rate AS (
     SELECT
@@ -69,18 +66,28 @@ WITH conv_rate AS (
         CASE WHEN l.amount != '0' OR NULL THEN '1' END AS amount
     FROM sessions AS s
     LEFT JOIN
-        leads AS l ON 
-    s.visitor_id = l.visitor_id AND 
+        leads AS l ON
+    s.visitor_id = l.visitor_id AND
     s.visit_date <= l.created_at
     WHERE s.medium != 'organic'
 )
 
 SELECT
-    ROUND(CAST(CAST(COUNT(lead_id) AS FLOAT) / 
-    CAST(COUNT(DISTINCT visitor_id) AS FLOAT) * 100 AS NUMERIC), 2) 
+    ROUND(
+        CAST(
+            CAST(
+                 COUNT(lead_id) AS FLOAT) / CAST(
+                 COUNT(DISTINCT visitor_id) AS FLOAT
+    ) * 100 AS NUMERIC
+    ), 2)
     AS lcr,
-    ROUND(CAST(CAST(COUNT(amount) AS FLOAT) / 
-    CAST(COUNT(lead_id) AS FLOAT) * 100 AS NUMERIC), 2) 
+    ROUND(
+        CAST(
+            CAST(
+                COUNT(amount) AS FLOAT) / CAST(
+                COUNT(lead_id) AS FLOAT
+    ) * 100 AS NUMERIC
+    ), 2)
     AS lc
 FROM conv_rate;
 
@@ -94,13 +101,13 @@ WITH main1 AS (
         vk.daily_spent AS ads_cost,
         LOWER(s.source) AS utm_source
     FROM sessions AS s
-    LEFT JOIN vk_ads AS vk ON 
-    s.source = vk.utm_source AND 
-    s.medium = vk.utm_medium AND 
+    LEFT JOIN vk_ads AS vk ON
+    s.source = vk.utm_source AND
+    s.medium = vk.utm_medium AND
     s.campaign = vk.utm_campaign
-    LEFT JOIN ya_ads AS ya ON 
-    s.source = ya.utm_source AND 
-    s.medium = ya.utm_medium AND 
+    LEFT JOIN ya_ads AS ya ON
+    s.source = ya.utm_source AND
+    s.medium = ya.utm_medium AND
     s.campaign = ya.utm_campaign
 ),
 
@@ -112,8 +119,8 @@ main2 AS (
         LOWER(m1.utm_source),
         CASE WHEN l.amount = '0' THEN NULL ELSE l.amount END AS revenue
     FROM main1 AS m1
-    LEFT JOIN leads AS l ON 
-    m1.visitor_id = l.visitor_id AND 
+    LEFT JOIN leads AS l ON
+    m1.visitor_id = l.visitor_id AND
     m1.visit_date <= l.created_at
 )
 
@@ -129,7 +136,7 @@ WITH registration_date AS (
     SELECT
         visitor_id,
         visit_date AS first_visit_date,
-        ROW_NUMBER() OVER (PARTITION BY visitor_id ORDER BY visit_date ASC) 
+        ROW_NUMBER() OVER (PARTITION BY visitor_id ORDER BY visit_date ASC)
         AS rn,
         source,
         medium,
@@ -148,24 +155,24 @@ main AS (
         rd.campaign,
         l.amount
     FROM registration_date rd
-    LEFT JOIN leads l ON 
-    rd.visitor_id = l.visitor_id AND 
+    LEFT JOIN leads l ON
+    rd.visitor_id = l.visitor_id AND
     rd.first_visit_date <= l.created_at
-    WHERE rn = '1' AND 
+    WHERE rn = '1' AND
     l.closing_reason = 'Успешная продажа'
 )
 
 SELECT
     medium,
-    ROUND(CAST(AVG(EXTRACT(DAY FROM lead_date - first_visit_date)) AS NUMERIC), 0) 
+    ROUND(CAST(AVG(EXTRACT(DAY FROM lead_date - first_visit_date)) AS NUMERIC), 0)
     AS lifetime,
     AVG(amount) AS avg_amount,
-    AVG(EXTRACT(DAY FROM lead_date - first_visit_date)) * AVG(amount) 
+    AVG(EXTRACT(DAY FROM lead_date - first_visit_date)) * AVG(amount)
     AS ltv
 FROM main
 GROUP BY medium
-ORDER BY 
-    ROUND(CAST(AVG(EXTRACT(DAY FROM lead_date - first_visit_date)) AS NUMERIC), 0);
+ORDER BY
+    2;
 
 -- За сколько закрывается 90 процентов сделок по рекламным кампаниям?
 WITH advert AS (
@@ -175,9 +182,9 @@ WITH advert AS (
         s.visitor_id,
         l.lead_id,
         CASE WHEN l.amount <> '0' OR NULL THEN '1' END AS amount
-    FROM sessions s 
-    LEFT JOIN leads l ON 
-    s.visitor_id = l.visitor_id AND 
+    FROM sessions s
+    LEFT JOIN leads l ON
+    s.visitor_id = l.visitor_id AND
     s.visit_date <= l.created_at
 )
 
@@ -193,101 +200,119 @@ ORDER BY 1;
 -- cpl = total_cost / leads_count
 -- cppu = total_cost / purchases_count
 -- roi = (revenue - total_cost) / total_cost * 100%
-WITH vk_and_yandex AS (
-    SELECT
-        TO_CHAR(campaign_date, 'YYYY-MM-DD') AS campaign_date,
+with vk_and_yandex as (
+    select
+        to_char(
+            campaign_date, 'YYYY-MM-DD'
+        )
+        as campaign_date,
         utm_source,
         utm_medium,
         utm_campaign,
-        SUM(COALESCE(daily_spent, 0)) AS total_cost
-    FROM vk_ads
-    GROUP BY 
-        TO_CHAR(campaign_date, 'YYYY-MM-DD'), 
+        sum(daily_spent) as total_cost
+    from
+        vk_ads
+    group by
+        1,
+        2,
+        3,
+        4
+    union all
+    select
+        to_char(
+            campaign_date, 'YYYY-MM-DD'
+        )
+        as campaign_date,
         utm_source,
         utm_medium,
         utm_campaign,
-    UNION ALL
-    SELECT
-        TO_CHAR(campaign_date, 'YYYY-MM-DD') AS campaign_date,
-        utm_source,
-        utm_medium,
-        utm_campaign,
-        SUM(COALESCE(daily_spent, 0)) AS total_cost
-    FROM ya_ads
-    GROUP BY 
-        TO_CHAR(campaign_date, 'YYYY-MM-DD'), 
-        utm_source,
-        utm_medium,
-        utm_campaign,
+        sum(daily_spent) as total_cost
+    from
+        ya_ads
+    group by
+        1,
+        2,
+        3,
+        4
 ),
 
-last_paid_users AS (
-    -- Создаём подзапрос в котором соединяем таблицы сессий и лидов
-    SELECT
-        s.source AS utm_source,
-        s.medium AS utm_medium,
-        s.campaign AS utm_campaign,
+/* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
+last_paid_users as (
+    select
+        s.source as utm_source,
+        s.medium as utm_medium,
+        s.campaign as utm_campaign,
         s.visitor_id,
         l.lead_id,
         l.status_id,
-        -- Нумеруем пользователей совершивших последний платный клик
         l.closing_reason,
         l.amount,
-        TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
-        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC) 
-        AS rn
-    FROM sessions AS s
-    LEFT JOIN leads AS l ON 
-    s.visitor_id = l.visitor_id AND 
-    s.visit_date <= l.created_at
-    WHERE
-        medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
-    -- Находим пользователей только с платными кликами
+        to_char(
+            s.visit_date, 'YYYY-MM-DD'
+        )
+        as visit_date,
+        row_number() over (
+            partition by s.visitor_id
+            order by s.visit_date desc
+        ) as rn
+    /* Нумеруем пользователей совершивших последний платный клик */
+    from
+        sessions as s
+    left join leads as l
+        on
+            s.visitor_id = l.visitor_id
+            and s.visit_date <= l.created_at
+    where
+        s.medium in ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
+/* Находим пользователей только с платными кликами */
 ),
 
 main AS (
-    SELECT  -- В основном запросе находим необходимые по условию поля
-        lpu.visit_date,
-        vy.total_cost AS total_cost,
-        COUNT(lpu.visitor_id) AS visitors_count,
-        LOWER(lpu.utm_source) AS utm_source,
-        COUNT(lpu.lead_id) AS leads_count,
-        COUNT(
-            CASE
-                WHEN lpu.status_id = '142' OR 
-                lpu.closing_reason = 'Успешно реализовано' 
-                THEN '1'
-            END
-        ) AS purchases_count,
-        SUM(
-            CASE
-                WHEN lpu.status_id = '142' OR 
-                lpu.closing_reason = 'Успешно реализовано' THEN 
-                lpu.amount
-            END
-        ) AS revenue
-    FROM last_paid_users AS lpu
-    LEFT JOIN vk_and_yandex AS vy ON 
-    lpu.utm_source = vy.utm_source AND 
-    lpu.visit_date = vy.campaign_date
-    WHERE
-        rn = '1'
-    -- Оставляем только пользователей с последним платным кликом
-    GROUP BY
+    select
+    /* В основном запросе находим необходимые по условию поля */
         lpu.visit_date,
         lpu.utm_source,
-        vy.total_cost
-    ORDER BY
-        SUM(
-            CASE
-                WHEN lpu.status_id = '142' OR 
-                lpu.closing_reason = 'Успешно реализовано' THEN 
-                lpu.amount
-            END
-        ) DESC NULLS LAST,
-        lpu.visit_date,
-        vy.total_cost DESC,
-        lpu.utm_source
+        lpu.utm_medium,
+        lpu.utm_campaign,
+        count(lpu.visitor_id) as visitors_count,
+        sum(vy.total_cost) as total_cost,
+        count(lpu.lead_id) as leads_count,
+        count(
+            case
+                when
+                    lpu.status_id = '142'
+                    then '1'
+            end
+        ) as purchase_count,
+        sum(
+            case
+                when
+                    lpu.status_id = '142'
+                    then lpu.amount
+            end
+        ) as revenue
+    from
+        last_paid_users as lpu
+    left join vk_and_yandex as vy
+    /* Соединяем по utm-меткам и дате проведения кампании */
+        on
+            lpu.utm_source = vy.utm_source
+            and lpu.visit_date = vy.campaign_date
+     where
+         lpu.rn = '1'
+/* Оставляем только пользователей с последним платным кликом */
+     group by
+        1,
+        2,
+        3,
+        4
+     order by
+        9 desc nulls last,
+        1,
+        6 desc,
+        2,
+        3,
+        4
 )
 
 SELECT
