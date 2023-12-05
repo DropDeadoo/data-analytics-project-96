@@ -48,7 +48,7 @@ SELECT
             ) * 100 AS NUMERIC
         ), 2
     )
-        AS lc
+    AS lc
 FROM advert
 GROUP BY
     visit_date,
@@ -103,14 +103,16 @@ WITH main1 AS (
         vk.daily_spent AS ads_cost,
         LOWER(s.source) AS utm_source
     FROM sessions AS s
-    LEFT JOIN vk_ads AS vk ON
-    s.source = vk.utm_source AND
-    s.medium = vk.utm_medium AND
-    s.campaign = vk.utm_campaign
-    LEFT JOIN ya_ads AS ya ON
-    s.source = ya.utm_source AND
-    s.medium = ya.utm_medium AND
-    s.campaign = ya.utm_campaign
+    LEFT JOIN
+        vk_ads AS vk 
+    ON s.source = vk.utm_source 
+    AND s.medium = vk.utm_medium 
+    AND s.campaign = vk.utm_campaign
+    LEFT JOIN 
+        ya_ads AS ya 
+    ON s.source = ya.utm_source 
+    AND s.medium = ya.utm_medium 
+    AND s.campaign = ya.utm_campaign
 ),
 
 main2 AS (
