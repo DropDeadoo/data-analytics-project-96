@@ -229,7 +229,7 @@ WITH vk_and_yandex AS (
         SUM(daily_spent) AS total_cost
     FROM
         vk_ads
-    GROUP BY 
+    GROUP BY
         TO_CHAR(campaign_date, 'YYYY-MM-DD'),
         utm_source,
         utm_medium,
@@ -246,7 +246,7 @@ WITH vk_and_yandex AS (
         SUM(daily_spent) AS total_cost
     FROM
         ya_ads
-    GROUP BY 
+    GROUP BY
         TO_CHAR(campaign_date, 'YYYY-MM-DD'),
         utm_source,
         utm_medium,
@@ -340,7 +340,7 @@ SELECT
     ROUND(total_cost / NULLIF(purchases_count, 0), 2) AS cppu,
     ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) AS roi
 FROM main
-ORDER BY 1;
+ORDER BY visit_date;
 
 -- Детализированная сводная таблица по utm_source, utm_medium, utm_campaign
 WITH vk_and_yandex AS (
@@ -351,7 +351,7 @@ WITH vk_and_yandex AS (
         utm_campaign,
         SUM(COALESCE(daily_spent, 0)) AS total_cost
     FROM vk_ads
-    GROUP BY 
+    GROUP BY
         TO_CHAR(campaign_date, 'YYYY-MM-DD'),
         utm_source,
         utm_medium,
@@ -364,7 +364,7 @@ WITH vk_and_yandex AS (
         utm_campaign,
         SUM(COALESCE(daily_spent, 0)) AS total_cost
     FROM ya_ads
-    GROUP BY 
+    GROUP BY
         TO_CHAR(campaign_date, 'YYYY-MM-DD'),
         utm_source,
         utm_medium,
@@ -388,8 +388,9 @@ last_paid_users AS (
     /* Нумеруем пользователей совершивших последний платный клик */
     FROM sessions AS s
     LEFT JOIN leads AS l
-    ON s.visitor_id = l.visitor_id
-    AND s.visit_date <= l.created_at
+        ON
+            s.visitor_id = l.visitor_id
+            AND s.visit_date <= l.created_at
     WHERE
         s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
 /* Находим пользователей только с платными кликами */
@@ -440,15 +441,15 @@ main AS (
         lpu.utm_source
 )
 
-select
+SELECT
     visit_date,
     utm_source,
-    ROUND(total_cost / NULLIF(visitors_count, 0), 2) as cpu,
-    ROUND(total_cost / NULLIF(leads_count, 0), 2) as cpl,
-    ROUND(total_cost / NULLIF(purchases_count, 0), 2) as cppu,
-    ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) as roi
-from main
-order by 1;
+    ROUND(total_cost / NULLIF(visitors_count, 0), 2) AS cpu,
+    ROUND(total_cost / NULLIF(leads_count, 0), 2) AS cpl,
+    ROUND(total_cost / NULLIF(purchases_count, 0), 2) AS cppu,
+    ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) AS roi
+FROM main
+ORDER BY 1;
 
 WITH vk_and_yandex AS (
     -- Детализированная сводная таблица по utm_source, utm_medium, utm_campaign
