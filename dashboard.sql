@@ -175,15 +175,14 @@ SELECT
     ROUND(
         CAST(
             AVG(
-                EXTRACT(DAY FROM lead_date - first_visit_date)) AS NUMERIC
-            ), 0
-        )
+                EXTRACT(DAY FROM lead_date - first_visit_date)
+            ) AS NUMERIC
+        ), 0
+    )
     AS lifetime,
     AVG(amount) AS avg_amount,
     AVG(
-        EXTRACT(
-            DAY FROM lead_date - first_visit_date)
-    ) * AVG(amount)
+        EXTRACT(DAY FROM lead_date - first_visit_date)) * AVG(amount)
     AS ltv
 FROM main
 GROUP BY medium
