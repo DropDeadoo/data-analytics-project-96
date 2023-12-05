@@ -34,10 +34,10 @@ SELECT
                 CAST(
                     COUNT(DISTINCT visitor_id) AS FLOAT
                 ), 0
-                   ) * 100 AS NUMERIC
-                ), 2
-           )
-        AS lcr,
+            ) * 100 AS NUMERIC
+        ), 2
+    )
+    AS lcr,
     ROUND(
         CAST(
             CAST(
@@ -45,9 +45,9 @@ SELECT
                 CAST(
                     COUNT(lead_id) AS FLOAT
                 ), 0
-                    ) * 100 AS NUMERIC
-                ), 2
-            )
+            ) * 100 AS NUMERIC
+        ), 2
+    )
         AS lc
 FROM advert
 GROUP BY
@@ -67,8 +67,8 @@ WITH conv_rate AS (
     FROM sessions AS s
     LEFT JOIN
         leads AS l ON
-    s.visitor_id = l.visitor_id AND
-    s.visit_date <= l.created_at
+        s.visitor_id = l.visitor_id
+        AND s.visit_date <= l.created_at
     WHERE s.medium != 'organic'
 )
 
@@ -76,18 +76,20 @@ SELECT
     ROUND(
         CAST(
             CAST(
-                 COUNT(lead_id) AS FLOAT) / CAST(
-                 COUNT(DISTINCT visitor_id) AS FLOAT
-    ) * 100 AS NUMERIC
-    ), 2)
+                COUNT(lead_id) AS FLOAT) / CAST(
+                COUNT(DISTINCT visitor_id) AS FLOAT
+            ) * 100 AS NUMERIC
+        ), 2
+    )
     AS lcr,
     ROUND(
         CAST(
             CAST(
                 COUNT(amount) AS FLOAT) / CAST(
                 COUNT(lead_id) AS FLOAT
-    ) * 100 AS NUMERIC
-    ), 2)
+            ) * 100 AS NUMERIC
+        ), 2
+    )
     AS lc
 FROM conv_rate;
 
