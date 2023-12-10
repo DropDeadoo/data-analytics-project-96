@@ -212,6 +212,7 @@ SELECT
 FROM advert
 ORDER BY visit_date;
 
+
 -- Основные метрики:
 -- cpu = total_cost / visitors_count
 -- cpl = total_cost / leads_count
@@ -256,7 +257,7 @@ WITH vk_and_yandex AS (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
 last_paid_users AS (
     SELECT
-        s.source AS utm_source,
+        lower(s.source) AS utm_source,
         s.medium AS utm_medium,
         s.campaign AS utm_campaign,
         s.visitor_id,
@@ -292,7 +293,7 @@ main AS (
         lpu.utm_medium,
         lpu.utm_campaign,
         COUNT(lpu.visitor_id) AS visitors_count,
-        SUM(vy.total_cost) AS total_cost,
+        vy.total_cost AS total_cost,
         COUNT(lpu.lead_id) AS leads_count,
         COUNT(
             CASE
@@ -322,7 +323,8 @@ main AS (
         lpu.visit_date,
         lpu.utm_source,
         lpu.utm_medium,
-        lpu.utm_campaign
+        lpu.utm_campaign,
+        vy.total_cost
     ORDER BY
         lpu.visit_date,
         lpu.utm_source,
@@ -343,7 +345,7 @@ SELECT
     utm_source,
     ROUND(total_cost / NULLIF(visitors_count, 0), 2) AS cpu,
     ROUND(total_cost / NULLIF(leads_count, 0), 2) AS cpl,
-    ROUND(total_cost / NULLIF(purchases_count, 0), 2) AS cppu,
+    ROUND(total_cost / NULLIF(purchase_count, 0), 2) AS cppu,
     ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) AS roi
 FROM main
 ORDER BY visit_date;
@@ -380,7 +382,7 @@ WITH vk_and_yandex AS (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
 last_paid_users AS (
     SELECT
-        s.source AS utm_source,
+        lower(s.source) AS utm_source,
         s.medium AS utm_medium,
         s.campaign AS utm_campaign,
         s.visitor_id,
@@ -409,6 +411,8 @@ main AS (
         vy.total_cost AS total_cost,
         COALESCE(COUNT(lpu.visitor_id), 0) AS visitors_count,
         LOWER(lpu.utm_source) AS utm_source,
+        lpu.utm_medium,
+        lpu.utm_campaign,
         COALESCE(COUNT(lpu.lead_id), 0) AS leads_count,
         COALESCE(COUNT(
             CASE
@@ -429,17 +433,24 @@ main AS (
         ON
             lpu.utm_source = vy.utm_source
             AND lpu.visit_date = vy.campaign_date
+            AND lpu.utm_medium = vy.utm_medium
+            AND lpu.utm_campaign = vy.utm_campaign
     WHERE
         lpu.rn = '1'
     -- Оставляем только пользователей с последним платным кликом
     GROUP BY
         lpu.visit_date,
         vy.total_cost,
-        lpu.utm_source
+        lpu.utm_source,
+        lpu.utm_medium,
+        lpu.utm_campaign,
+        vy.total_cost
     ORDER BY
         lpu.visit_date ASC,
         vy.total_cost DESC,
         lpu.utm_source ASC,
+        lpu.utm_medium ASC,
+        lpu.utm_campaign ASC,
         COALESCE(SUM(
             CASE
                 WHEN lpu.status_id = '142'
@@ -451,138 +462,13 @@ main AS (
 SELECT
     visit_date,
     utm_source,
-    ROUND(total_cost / NULLIF(visitors_count, 0), 2) AS cpu,
-    ROUND(total_cost / NULLIF(leads_count, 0), 2) AS cpl,
-    ROUND(total_cost / NULLIF(purchases_count, 0), 2) AS cppu,
-    ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) AS roi
-FROM main
-ORDER BY
-    visit_date,
-    utm_source;
-
-WITH vk_and_yandex AS (
-    -- Детализированная сводная таблица по utm_source, utm_medium, utm_campaign
-    SELECT
-        TO_CHAR(campaign_date, 'YYYY-MM-DD') AS campaign_date,
-        utm_source,
-        utm_medium,
-        utm_campaign,
-        SUM(COALESCE(daily_spent, 0)) AS total_cost
-    FROM vk_ads
-    GROUP BY
-        TO_CHAR(campaign_date, 'YYYY-MM-DD'),
-        utm_source,
-        utm_medium,
-        utm_campaign
-
-    UNION ALL
-
-    SELECT
-        TO_CHAR(campaign_date, 'YYYY-MM-DD') AS campaign_date,
-        utm_source,
-        utm_medium,
-        utm_campaign,
-        SUM(COALESCE(daily_spent, 0)) AS total_cost
-    FROM ya_ads
-    GROUP BY
-        TO_CHAR(campaign_date, 'YYYY-MM-DD'),
-        utm_source,
-        utm_medium,
-        utm_campaign
-),
-
-/* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
-last_paid_users AS (
-    SELECT
-        s.source AS utm_source,
-        s.medium AS utm_medium,
-        s.campaign AS utm_campaign,
-        s.visitor_id,
-        l.lead_id,
-        l.status_id,
-        l.closing_reason,
-        l.amount,
-        TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
-        ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
-        AS rn
-    FROM
-        sessions AS s
-    LEFT JOIN
-        leads AS l
-        ON
-            s.visitor_id = l.visitor_id
-            AND s.visit_date <= l.created_at
-    WHERE
-        s.medium IN ('cpc', 'cpm', 'cpa', 'youtube', 'cpp', 'tg', 'social')
-),
-
-main AS (
-    -- В основном запросе находим необходимые по условию поля
-    SELECT
-        lpu.visit_date,
-        lpu.utm_medium,
-        lpu.utm_campaign,
-        vy.total_cost AS total_cost,
-        COUNT(lpu.visitor_id) AS visitors_count,
-        LOWER(lpu.utm_source) AS utm_source,
-        COUNT(lpu.lead_id) AS leads_count,
-        COUNT(
-            CASE
-                WHEN
-                    lpu.status_id = '142'
-                    THEN '1'
-            END
-        ) AS purchases_count,
-        SUM(
-            CASE
-                WHEN
-                    lpu.status_id = '142'
-                    THEN lpu.amount
-            END
-        ) AS revenue
-    FROM
-        last_paid_users AS
-        lpu
-    LEFT JOIN
-        vk_and_yandex AS vy
-        ON
-            lpu.utm_source = vy.utm_source
-            AND lpu.utm_medium = vy.utm_medium
-            AND lpu.utm_campaign = vy.utm_campaign
-            AND lpu.visit_date = vy.campaign_date
-    WHERE
-        lpu.rn = '1'
-    -- Оставляем только пользователей с последним платным кликом
-    GROUP BY
-        lpu.visit_date,
-        lpu.utm_source,
-        lpu.utm_medium,
-        lpu.utm_campaign
-    ORDER BY
-        lpu.visit_date,
-        lpu.utm_source,
-        lpu.utm_medium,
-        lpu.utm_campaign,
-        SUM(vy.total_cost) DESC,
-        SUM(
-            CASE
-                WHEN
-                    lpu.status_id = '142'
-                    THEN lpu.amount
-            END
-        ) DESC NULLS LAST
-)
-
-SELECT
-    visit_date,
-    utm_source,
     utm_medium,
     utm_campaign,
     ROUND(total_cost / NULLIF(visitors_count, 0), 2) AS cpu,
     ROUND(total_cost / NULLIF(leads_count, 0), 2) AS cpl,
     ROUND(total_cost / NULLIF(purchases_count, 0), 2) AS cppu,
     ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) AS roi
-FROM
-    main
+FROM main
 ORDER BY
-    visit_date;
+    visit_date
+    ;
