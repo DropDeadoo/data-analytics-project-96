@@ -257,7 +257,7 @@ WITH vk_and_yandex AS (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
 last_paid_users AS (
     SELECT
-        lower(s.source) AS utm_source,
+        LOWER(s.source) AS utm_source,
         s.medium AS utm_medium,
         s.campaign AS utm_campaign,
         s.visitor_id,
@@ -382,7 +382,7 @@ WITH vk_and_yandex AS (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
 last_paid_users AS (
     SELECT
-        lower(s.source) AS utm_source,
+        LOWER(s.source) AS utm_source,
         s.medium AS utm_medium,
         s.campaign AS utm_campaign,
         s.visitor_id,
@@ -409,10 +409,10 @@ main AS (
     SELECT
         lpu.visit_date,
         vy.total_cost AS total_cost,
-        COALESCE(COUNT(lpu.visitor_id), 0) AS visitors_count,
         LOWER(lpu.utm_source) AS utm_source,
         lpu.utm_medium,
         lpu.utm_campaign,
+        COALESCE(COUNT(lpu.visitor_id), 0) AS visitors_count,
         COALESCE(COUNT(lpu.lead_id), 0) AS leads_count,
         COALESCE(COUNT(
             CASE
@@ -470,5 +470,4 @@ SELECT
     ROUND((revenue - total_cost) / NULLIF(total_cost, 0) * 100.0, 2) AS roi
 FROM main
 ORDER BY
-    visit_date
-    ;
+    visit_date;
