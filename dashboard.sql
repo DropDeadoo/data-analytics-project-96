@@ -257,7 +257,6 @@ WITH vk_and_yandex AS (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
 last_paid_users AS (
     SELECT
-        LOWER(s.source) AS utm_source,
         s.medium AS utm_medium,
         s.campaign AS utm_campaign,
         s.visitor_id,
@@ -265,6 +264,7 @@ last_paid_users AS (
         l.status_id,
         l.closing_reason,
         l.amount,
+        LOWER(s.source) AS utm_source,
         TO_CHAR(
             s.visit_date, 'YYYY-MM-DD'
         )
