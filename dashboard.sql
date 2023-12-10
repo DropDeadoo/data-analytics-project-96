@@ -292,8 +292,8 @@ main AS (
         lpu.utm_source,
         lpu.utm_medium,
         lpu.utm_campaign,
-        COUNT(lpu.visitor_id) AS visitors_count,
         vy.total_cost AS total_cost,
+        COUNT(lpu.visitor_id) AS visitors_count,
         COUNT(lpu.lead_id) AS leads_count,
         COUNT(
             CASE
@@ -382,7 +382,6 @@ WITH vk_and_yandex AS (
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
 last_paid_users AS (
     SELECT
-        LOWER(s.source) AS utm_source,
         s.medium AS utm_medium,
         s.campaign AS utm_campaign,
         s.visitor_id,
@@ -390,6 +389,7 @@ last_paid_users AS (
         l.status_id,
         l.closing_reason,
         l.amount,
+        LOWER(s.source) AS utm_source,
         TO_CHAR(s.visit_date, 'YYYY-MM-DD') AS visit_date,
         ROW_NUMBER() OVER (PARTITION BY s.visitor_id ORDER BY s.visit_date DESC)
         AS rn
@@ -409,7 +409,7 @@ main AS (
     SELECT
         lpu.visit_date,
         vy.total_cost AS total_cost,
-        LOWER(lpu.utm_source) AS utm_source,
+        lpu.utm_source,
         lpu.utm_medium,
         lpu.utm_campaign,
         COALESCE(COUNT(lpu.visitor_id), 0) AS visitors_count,
