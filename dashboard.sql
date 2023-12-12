@@ -218,9 +218,10 @@ ORDER BY visit_date;
 -- cpl = total_cost / leads_count
 -- cppu = total_cost / purchases_count
 -- roi = (revenue - total_cost) / total_cost * 100%
--- Взяла скрипт из файла aggregate_last_paid_click и составила сводную таблицу с метриками -- 
+-- Взяла скрипт из файла aggregate_last_paid_click
+-- и составила сводную таблицу с метриками 
 -- https://docs.google.com/spreadsheets/
--- d/1pp0M5LmxHh4pKlW8Rqfem0ND-h9E2PnXu7yxj6LglKk/edit?usp=sharing -- 
+-- d/1pp0M5LmxHh4pKlW8Rqfem0ND-h9E2PnXu7yxj6LglKk/edit?usp=sharing 
 WITH vk_and_yandex AS (
     SELECT
         TO_CHAR(
@@ -230,14 +231,16 @@ WITH vk_and_yandex AS (
         utm_source,
         utm_medium,
         utm_campaign,
-        sum(daily_spent) AS total_cost
+        SUM(daily_spent) AS total_cost
     FROM
         vk_ads
     GROUP BY
-        1,
-        2,
-        3,
-        4
+         TO_CHAR(
+            campaign_date, 'YYYY-MM-DD'
+        ),
+        utm_source,
+        utm_medium,
+        utm_campaign
     UNION ALL
     SELECT
         TO_CHAR(
@@ -247,20 +250,21 @@ WITH vk_and_yandex AS (
         utm_source,
         utm_medium,
         utm_campaign,
-        sum(daily_spent) AS total_cost
+        SUM(daily_spent) AS total_cost
     FROM
         ya_ads
     GROUP BY
-        1,
-        2,
-        3,
-        4
+         TO_CHAR(
+            campaign_date, 'YYYY-MM-DD'
+        ),
+        utm_source,
+        utm_medium,
+        utm_campaign
 ),
 
 /* Создаём подзапрос в котором соединяем таблицы сессий и лидов */
 last_paid_users AS (
     SELECT
-        lower(s.source) AS utm_source,
         s.medium AS utm_medium,
         s.campaign AS utm_campaign,
         s.visitor_id,
@@ -268,6 +272,7 @@ last_paid_users AS (
         l.status_id,
         l.closing_reason,
         l.amount,
+        LOWER(s.source) AS utm_source,
         TO_CHAR(
             s.visit_date, 'YYYY-MM-DD'
         )
@@ -321,7 +326,7 @@ LEFT JOIN vk_and_yandex AS vy
         AND lpu.utm_medium = vy.utm_medium
         AND lpu.utm_campaign = vy.utm_campaign
         AND lpu.visit_date = vy.campaign_date
-WHERE
+    WHERE
     lpu.rn = '1' 
      AND lpu.utm_source IN ('vk', 'yandex')
 /* Оставляем только пользователей с последним платным кликом */
