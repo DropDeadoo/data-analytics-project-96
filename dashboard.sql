@@ -235,7 +235,7 @@ WITH vk_and_yandex AS (
     FROM
         vk_ads
     GROUP BY
-         TO_CHAR(
+        TO_CHAR(
             campaign_date, 'YYYY-MM-DD'
         ),
         utm_source,
@@ -254,7 +254,7 @@ WITH vk_and_yandex AS (
     FROM
         ya_ads
     GROUP BY
-         TO_CHAR(
+        TO_CHAR(
             campaign_date, 'YYYY-MM-DD'
         ),
         utm_source,
@@ -326,9 +326,9 @@ LEFT JOIN vk_and_yandex AS vy
         AND lpu.utm_medium = vy.utm_medium
         AND lpu.utm_campaign = vy.utm_campaign
         AND lpu.visit_date = vy.campaign_date
-    WHERE
-    lpu.rn = '1' 
-     AND lpu.utm_source IN ('vk', 'yandex')
+WHERE
+    lpu.rn = '1'
+    AND lpu.utm_source IN ('vk', 'yandex')
 /* Оставляем только пользователей с последним платным кликом */
 GROUP BY
     lpu.visit_date,
